@@ -1,0 +1,52 @@
+---
+// src/components/CompendiumHead.astro
+// Overrides Starlight's <Head> slot.
+// Injects the BookSwitcher overlay and activates the correct stylesheet
+// based on the current URL path — without any server-side routing needed.
+import Default from "@astrojs/starlight/components/Head.astro";
+import BookSwitcher from "./BookSwitcher.astro";
+---
+
+<Default {...Astro.props}>
+  <slot />
+</Default>
+
+<!-- BookSwitcher sits above everything else, fixed to viewport top -->
+<BookSwitcher />
+
+<!--
+  Inline script: set body class ASAP (before paint) so there's no
+  flash of unstyled content when switching books.
+-->
+<script is:inline>
+  (function () {
+    var path = window.location.pathname;
+    if (path.indexOf('/received-canon') !== -1) {
+      document.documentElement.classList.add('book-canon');
+    } else if (path.indexOf('/frontier') !== -1) {
+      document.documentElement.classList.add('book-frontier');
+    }
+  })();
+</script>
+
+<!-- Frontier version badge injected via JS for Frontier pages only -->
+<script is:inline>
+  (function () {
+    if (window.location.pathname.indexOf('/frontier') === -1) return;
+    // Fetch frontier_version.json (served from site root in release-book branch)
+    fetch('/frontier_version.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (v) {
+        if (!v) return;
+        var badge = document.createElement('div');
+        badge.className = 'frontier-version-badge';
+        badge.textContent =
+          'FRONTIER v' + v.major + '.' + v.minor +
+          ' \u2014 ' + (v.last_updated || '').slice(0, 10);
+        var article = document.querySelector('article') ||
+                      document.querySelector('.sl-markdown-content');
+        if (article) article.appendChild(badge);
+      })
+      .catch(function () { /* version file absent — silent */ });
+  })();
+</script>

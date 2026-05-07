@@ -1,0 +1,250 @@
+name: "Compendium of Algorithms — Biweekly Assembler"
+
+on:
+  schedule:
+    - cron: "0 2 1,15 * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Generation mode"
+        required: false
+        default: "incremental"
+        type: choice
+        options:
+          - incremental
+          - all
+      skip_research:
+        description: "Skip research phase (use cached context)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write   # needed for release creation and branch push
+
+jobs:
+  assemble-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install anthropic
+
+      # ── State caches ───────────────────────────────────────────────────────
+      - name: Restore assembler state cache
+        uses: actions/cache@v4
+        with:
+          path: .assembler_state.json
+          key: assembler-state-${{ github.run_id }}
+          restore-keys: assembler-state-
+
+      - name: Restore research context cache
+        uses: actions/cache@v4
+        with:
+          path: research_context.json
+          key: research-context-${{ github.run_id }}
+          restore-keys: research-context-
+
+      - name: Restore frontier version cache
+        uses: actions/cache@v4
+        with:
+          path: frontier_version.json
+          key: frontier-version-${{ github.run_id }}
+          restore-keys: frontier-version-
+
+      # ── PHASE 1: Research ──────────────────────────────────────────────────
+      # arXiv crawl + Papers With Code + Claude web_search emergent scan.
+      # Writes research_context.json consumed by the assembler.
+      - name: Run Research Agent
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        if: github.event.inputs.skip_research != 'true'
+        run: python scripts/research.py --days 14
+
+      - name: Summarise emergent candidates
+        if: github.event.inputs.skip_research != 'true'
+        run: |
+          python - << 'PYEOF'
+          import json, pathlib
+          path = pathlib.Path("research_context.json")
+          if not path.exists():
+              exit(0)
+          ctx   = json.loads(path.read_text())
+          cands = ctx.get("emergent", {}).get("candidates", [])
+          print(f"\n{'='*60}")
+          print(f"  NEW: {len(cands)} emergent candidate(s) — copy to topics_registry.py")
+          print(f"{'='*60}")
+          for c in cands:
+              print(f"  [{c.get('era','')}] {c.get('title','')}")
+          PYEOF
+
+      # ── PHASE 2: Assembly ──────────────────────────────────────────────────
+      # Writes only to src/content/docs/frontier/ (canon guard enforced).
+      - name: Run AI Assembler (Frontier only)
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'incremental' }}"
+          if [ "$MODE" = "all" ]; then
+            python scripts/assemble_tome.py --all
+          else
+            python scripts/assemble_tome.py
+          fi
+
+      # ── PHASE 3: Version management ────────────────────────────────────────
+      # Computes character-count delta against baseline.
+      # Exit 0  → normal (no archive needed)
+      # Exit 2  → ≥15% content reduction → archive this version
+      - name: Run Version Manager
+        id: versioning
+        run: |
+          set +e
+          python scripts/version_manager.py
+          VERSION_EXIT=$?
+          set -e
+
+          # Read version for use in later steps
+          VERSION=$(python -c "
+          import json, pathlib
+          v = json.loads(pathlib.Path('frontier_version.json').read_text())
+          print(f\"{v['major']}.{v['minor']}\")
+          ")
+          echo "frontier_version=$VERSION"     >> $GITHUB_OUTPUT
+          echo "archive_triggered=$( [ $VERSION_EXIT -eq 2 ] && echo true || echo false )" >> $GITHUB_OUTPUT
+          echo "Frontier version: $VERSION"
+          echo "Archive triggered: $( [ $VERSION_EXIT -eq 2 ] && echo YES || echo no )"
+
+      # ── PHASE 4: Build ─────────────────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build Starlight site
+        run: npm run build
+        # frontier_version.json is copied into dist/ so the client JS badge can fetch it
+
+      - name: Copy version file into dist
+        run: |
+          cp frontier_version.json dist/frontier_version.json 2>/dev/null || true
+
+      # ── PHASE 5: Archive release (conditional) ─────────────────────────────
+      # Creates a GitHub Release + ZIP when a significant content reduction fires.
+      - name: Create archive release
+        if: steps.versioning.outputs.archive_triggered == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.versioning.outputs.frontier_version }}"
+          TAG="frontier-v${VERSION}-archive-$(date +'%Y%m%d')"
+
+          # Build ZIP of current Frontier compiled pages
+          zip -r "frontier-archive-${VERSION}.zip" dist/ \
+            --include "dist/frontier/*" -q
+
+          # Auto-generate changelog from research log
+          CHANGELOG=$(python - << 'PYEOF'
+          import json, pathlib
+          lines = ["## Frontier Archive — Auto-generated Changelog\n"]
+          ctx_path = pathlib.Path("research_context.json")
+          if ctx_path.exists():
+              ctx = json.loads(ctx_path.read_text())
+              emergent = ctx.get("emergent", {})
+              summary = emergent.get("summary", "")
+              if summary:
+                  lines.append(f"**Research summary:** {summary}\n")
+              cands = emergent.get("candidates", [])
+              if cands:
+                  lines.append("**emergent candidates identified this cycle:**")
+                  for c in cands:
+                      lines.append(f"- [{c.get('era','')}] {c.get('title','')} — {c.get('summary','')}")
+          ver_path = pathlib.Path("frontier_version.json")
+          if ver_path.exists():
+              v = json.loads(ver_path.read_text())
+              history = v.get("history", [])
+              if history:
+                  lines.append("\n**Version history:**")
+                  for h in history[-5:]:
+                      lines.append(f"- v{h['version']} ({h['date']}) — {h['event']}")
+          print("\n".join(lines))
+          PYEOF
+          )
+
+          gh release create "$TAG" \
+            "frontier-archive-${VERSION}.zip#Frontier Compiled Site" \
+            --title "Frontier Archive v${VERSION} ($(date +'%Y-%m-%d'))" \
+            --notes "$CHANGELOG" \
+            --prerelease
+
+          echo "Created GitHub Release: $TAG"
+
+      # ── PHASE 6: Publish to release-book branch ────────────────────────────
+      - name: Publish to release-book branch
+        run: |
+          git config --global user.name  "Compendium Assembler"
+          git config --global user.email "assembler@github.com"
+
+          cp -r dist /tmp/compendium-dist
+          cp .assembler_state.json  /tmp/assembler_state.json  2>/dev/null || true
+          cp research_context.json  /tmp/research_context.json 2>/dev/null || true
+          cp frontier_version.json  /tmp/frontier_version.json 2>/dev/null || true
+
+          git checkout -B release-book
+          git rm -rf --cached . 2>/dev/null || true
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+
+          cp -r /tmp/compendium-dist/. .
+          rm -rf /tmp/compendium-dist
+
+          # Restore state files for next incremental run
+          cp /tmp/assembler_state.json  .assembler_state.json  2>/dev/null || true
+          cp /tmp/research_context.json research_context.json  2>/dev/null || true
+          cp /tmp/frontier_version.json frontier_version.json  2>/dev/null || true
+
+          cat > README.md << 'EOF'
+          # Compendium of Algorithms — Compiled
+          The Formal Specification and Structural Composition of Probabilistic
+          Computational Systems and Their Occasional Interdependence
+
+          Open index.html to read locally.
+          Liber Primus: The Received Canon  |  Liber Levitatis et Inconstantiae: Frontier
+
+          This branch is auto-generated. See main branch for source scripts.
+          EOF
+
+          FRONTIER_VERSION="${{ steps.versioning.outputs.frontier_version }}"
+          git add -A
+          git commit -m "Compendium update $(date +'%Y-%m-%d') — Frontier v${FRONTIER_VERSION}" \
+            || echo "Nothing to commit"
+          git push origin release-book --force
+
+      # ── PHASE 7: Upload artifact ───────────────────────────────────────────
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compendium-${{ github.run_number }}-frontier-v${{ steps.versioning.outputs.frontier_version }}
+          path: /tmp/compendium-dist
+          retention-days: 30
+
+      # Uncomment to deploy to GitHub Pages:
+      # - name: Deploy to GitHub Pages
+      #   uses: actions/deploy-pages@v4

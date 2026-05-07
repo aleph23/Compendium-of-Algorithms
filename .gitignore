@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.astro/
+*.pyc
+__pycache__/
+.env
+.VSCode/
+*.log
+*.code-workspace
+
+# State file IS committed so incremental runs work across Actions checkouts
+# (the workflow uses actions/cache for .assembler_state.json)
+pnpm-workspace.yaml
+pnpm-lock.yaml

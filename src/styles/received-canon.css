@@ -1,0 +1,223 @@
+/* ============================================================
+   received-canon.css
+   Liber Primus: The Received Canon
+   Warm parchment — the weight of settled knowledge
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400&display=swap');
+
+/* ── Palette ──────────────────────────────────────────────── */
+:root {
+  --canon-ink:         #1c1208;
+  --canon-ink-muted:   #4a3728;
+  --canon-parchment:   #f5eedc;
+  --canon-parchment-2: #ede3c8;
+  --canon-parchment-3: #e0d4b0;
+  --canon-accent:      #7a3b1e;     /* old red */
+  --canon-accent-soft: #b5622f;
+  --canon-rule:        #c8b88a;
+  --canon-shadow:      rgba(28, 18, 8, 0.12);
+  --canon-code-bg:     #ede3c7;
+  --canon-admon-bg:    #f0e9d6;
+}
+
+/* ── Base ─────────────────────────────────────────────────── */
+body.book-canon {
+  background-color: var(--canon-parchment);
+  color:            var(--canon-ink);
+  font-family:      'IM Fell English', Georgia, 'Times New Roman', serif;
+  font-size:        1.05rem;
+  line-height:      1.85;
+}
+
+/* Subtle vellum texture overlay */
+body.book-canon::before {
+  content:  '';
+  position: fixed;
+  inset:    0;
+  pointer-events: none;
+  z-index:  0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.6;
+}
+
+/* ── Starlight overrides ───────────────────────────────────── */
+body.book-canon .sl-container,
+body.book-canon [data-has-sidebar] {
+  background: var(--canon-parchment);
+}
+
+body.book-canon header.header {
+  background:   var(--canon-parchment-2);
+  border-bottom: 1px solid var(--canon-rule);
+  font-family:  'IM Fell English SC', serif;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+body.book-canon nav.sidebar {
+  background:   var(--canon-parchment-2);
+  border-right: 1px solid var(--canon-rule);
+  font-family:  'IM Fell English', serif;
+  font-size:    0.92rem;
+}
+
+body.book-canon .sidebar-content a {
+  color: var(--canon-ink-muted);
+}
+
+body.book-canon .sidebar-content a:hover,
+body.book-canon .sidebar-content a[aria-current='page'] {
+  color:            var(--canon-accent);
+  text-decoration:  underline;
+  text-underline-offset: 3px;
+}
+
+body.book-canon .sidebar-content details summary {
+  font-family:  'IM Fell English SC', serif;
+  font-size:    0.82rem;
+  letter-spacing: 0.05em;
+  color:        var(--canon-ink-muted);
+  text-transform: uppercase;
+}
+
+/* ── Headings ─────────────────────────────────────────────── */
+body.book-canon h1,
+body.book-canon h2,
+body.book-canon h3,
+body.book-canon h4 {
+  font-family:  'IM Fell English SC', serif;
+  color:        var(--canon-ink);
+  font-weight:  400;
+}
+
+body.book-canon h1 {
+  font-size: 2.2rem;
+  border-bottom: 1px solid var(--canon-rule);
+  padding-bottom: 0.4em;
+  margin-bottom: 1rem;
+}
+
+body.book-canon h2 {
+  font-size: 1.5rem;
+  margin-top: 2.5rem;
+  color: var(--canon-accent);
+  border-bottom: 1px solid var(--canon-parchment-3);
+  padding-bottom: 0.2em;
+}
+
+body.book-canon h3 { font-size: 1.2rem; color: var(--canon-accent-soft); }
+body.book-canon h4 { font-size: 1rem;   font-style: italic; }
+
+/* ── Links ────────────────────────────────────────────────── */
+body.book-canon a {
+  color:            var(--canon-accent);
+  text-decoration:  none;
+}
+body.book-canon a:hover {
+  text-decoration:  underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Horizontal rules ─────────────────────────────────────── */
+body.book-canon hr {
+  border:     none;
+  border-top: 1px solid var(--canon-rule);
+  margin:     2.5rem auto;
+  width:      60%;
+}
+
+/* ── Code ─────────────────────────────────────────────────── */
+body.book-canon code {
+  background:   var(--canon-code-bg);
+  border:       1px solid var(--canon-rule);
+  border-radius: 2px;
+  padding:      0.1em 0.35em;
+  font-family:  'Courier Prime', 'Courier New', monospace;
+  font-size:    0.88em;
+  color:        var(--canon-accent);
+}
+
+body.book-canon pre {
+  background:   var(--canon-code-bg);
+  border:       1px solid var(--canon-rule);
+  border-left:  3px solid var(--canon-accent);
+  padding:      1.2rem;
+  border-radius: 2px;
+  overflow-x:   auto;
+  box-shadow:   2px 2px 8px var(--canon-shadow);
+}
+
+body.book-canon pre code {
+  background: transparent;
+  border:     none;
+  padding:    0;
+  color:      var(--canon-ink);
+}
+
+/* ── Blockquote (plain-English equation paragraphs) ────────── */
+body.book-canon blockquote {
+  border-left:    3px solid var(--canon-accent);
+  background:     var(--canon-parchment-2);
+  margin:         1.5rem 0;
+  padding:        0.8rem 1.2rem;
+  font-style:     italic;
+  color:          var(--canon-ink-muted);
+  box-shadow:     1px 1px 4px var(--canon-shadow);
+}
+
+/* ── Tables ───────────────────────────────────────────────── */
+body.book-canon table {
+  border-collapse: collapse;
+  width:           100%;
+  font-size:       0.92rem;
+  margin:          1.5rem 0;
+}
+
+body.book-canon th {
+  background:   var(--canon-parchment-3);
+  border:       1px solid var(--canon-rule);
+  padding:      0.5rem 0.8rem;
+  font-family:  'IM Fell English SC', serif;
+  font-weight:  400;
+  text-align:   left;
+  color:        var(--canon-accent);
+}
+
+body.book-canon td {
+  border:   1px solid var(--canon-rule);
+  padding:  0.4rem 0.8rem;
+}
+
+body.book-canon tr:nth-child(even) td {
+  background: var(--canon-parchment-2);
+}
+
+/* ── Admonitions ──────────────────────────────────────────── */
+body.book-canon .starlight-aside {
+  background:   var(--canon-admon-bg);
+  border-left:  3px solid var(--canon-accent-soft);
+  border-radius: 0;
+  font-style:   italic;
+}
+
+/* ── Mermaid diagrams ─────────────────────────────────────── */
+body.book-canon .mermaid {
+  background: var(--canon-parchment-2);
+  border:     1px solid var(--canon-rule);
+  padding:    1rem;
+}
+
+/* ── Math ─────────────────────────────────────────────────── */
+body.book-canon .math-display {
+  background:   var(--canon-parchment-2);
+  border:       1px solid var(--canon-rule);
+  padding:      0.8rem 1.2rem;
+}
+
+/* ── Pagination ───────────────────────────────────────────── */
+body.book-canon .pagination-links a {
+  border: 1px solid var(--canon-rule);
+  background: var(--canon-parchment-2);
+  color: var(--canon-ink-muted);
+}

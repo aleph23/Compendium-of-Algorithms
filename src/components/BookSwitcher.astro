@@ -1,0 +1,148 @@
+---
+// BookSwitcher.astro
+// Fixed-position transparent overlay.
+// At rest: invisible — takes no visual space.
+// On hover: frosted glass reveals the two book titles side by side.
+// Cinzel Decorative for the engraved-inscription look.
+---
+
+<div id="book-switcher" aria-label="Switch between Liber Primus and Liber Frontier">
+  <div class="switcher-inner">
+    <a href="/received-canon/" class="book-title" id="title-canon" data-book="canon">
+      <span class="book-number">Liber Primus</span>
+      <span class="book-subtitle">The Received Canon</span>
+    </a>
+
+    <div class="divider" aria-hidden="true">✦</div>
+
+    <a href="/frontier/" class="book-title" id="title-frontier" data-book="frontier">
+      <span class="book-number">Liber Levitatis et Inconstantiae</span>
+      <span class="book-subtitle">Frontier</span>
+    </a>
+  </div>
+</div>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400&display=swap');
+
+  #book-switcher {
+    position:   fixed;
+    top:        0;
+    left:       0;
+    right:      0;
+    /* Tall enough to be easily hovered — no visual footprint at rest */
+    height:     80px;
+    z-index:    9999;
+    /* Fully transparent at rest */
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition:
+      background       0.3s ease,
+      backdrop-filter  0.3s ease,
+      -webkit-backdrop-filter 0.3s ease;
+    /* Pointer only active in the actual hover zone */
+    pointer-events: all;
+    cursor: default;
+  }
+
+  #book-switcher:hover {
+    background:          rgba(30, 30, 40, 0.45);
+    backdrop-filter:     blur(14px) saturate(0.7) brightness(0.85);
+    -webkit-backdrop-filter: blur(14px) saturate(0.7) brightness(0.85);
+  }
+
+  /* Inner flex row — hidden at rest, visible on parent hover */
+  .switcher-inner {
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    gap:             3rem;
+    height:          100%;
+    padding:         0 2rem;
+    opacity:         0;
+    transform:       translateY(-6px);
+    transition:      opacity 0.25s ease, transform 0.25s ease;
+    pointer-events:  none;
+  }
+
+  #book-switcher:hover .switcher-inner {
+    opacity:        1;
+    transform:      translateY(0);
+    pointer-events: all;
+  }
+
+  /* Book title links */
+  .book-title {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            0.2rem;
+    text-decoration: none;
+    transition:     opacity 0.2s ease;
+    opacity:        0.7;
+  }
+
+  .book-title:hover,
+  .book-title.active {
+    opacity: 1;
+  }
+
+  .book-title.active .book-number {
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+  }
+
+  .book-number {
+    font-family:    'Cinzel Decorative', 'Cinzel', serif;
+    font-size:      0.78rem;
+    font-weight:    400;
+    color:          rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height:    1.2;
+    text-align:     center;
+  }
+
+  .book-subtitle {
+    font-family:    'Cinzel', serif;
+    font-size:      0.6rem;
+    font-weight:    400;
+    color:          rgba(200, 200, 210, 0.65);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align:     center;
+  }
+
+  /* Central ornament */
+  .divider {
+    font-size:   1rem;
+    color:       rgba(180, 160, 120, 0.5);
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  /* On Canon pages: warm tint; on Frontier: cold tint */
+  body.book-canon  #book-switcher:hover { background: rgba(30, 18, 8, 0.5); }
+  body.book-frontier #book-switcher:hover { background: rgba(8, 14, 30, 0.5); }
+</style>
+
+<script>
+  // Detect active book from URL path and mark the correct title link.
+  (function () {
+    const path = window.location.pathname;
+
+    const isCanon    = path.includes('/received-canon');
+    const isFrontier = path.includes('/frontier');
+
+    const canonLink    = document.getElementById('title-canon');
+    const frontierLink = document.getElementById('title-frontier');
+
+    if (isCanon    && canonLink)    canonLink.classList.add('active');
+    if (isFrontier && frontierLink) frontierLink.classList.add('active');
+
+    // Apply body class so the right stylesheet is activated via CSS cascade.
+    // (Starlight renders one shared body; we toggle the class here.)
+    if (isCanon)    document.body.classList.add('book-canon');
+    if (isFrontier) document.body.classList.add('book-frontier');
+  })();
+</script>

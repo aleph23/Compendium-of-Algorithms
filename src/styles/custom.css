@@ -1,0 +1,49 @@
+/* src/styles/custom.css
+   Custom overrides for the Compendium of Algorithms Starlight theme
+*/
+
+/* ── Mermaid diagram centering ────────────────────────────────────────────── */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+/* ── KaTeX display math spacing ──────────────────────────────────────────── */
+.math-display {
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+/* ── Symbol key table styling ────────────────────────────────────────────── */
+table {
+  font-size: 0.9rem;
+}
+
+table code {
+  background: var(--sl-color-gray-6);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+/* ── Era badge colours ───────────────────────────────────────────────────── */
+.sl-badge {
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+/* ── Sidebar category labels ─────────────────────────────────────────────── */
+.sidebar-content details summary {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ── Equation plain-English paragraphs ───────────────────────────────────── */
+blockquote {
+  border-left: 3px solid var(--sl-color-accent);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--sl-color-gray-2);
+}

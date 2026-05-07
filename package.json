@@ -1,0 +1,23 @@
+{
+  "name": "ai-arch-book",
+  "version": "0.1.0",
+  "description": "Living AI architecture reference — auto-assembled biweekly.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev":    "astro dev",
+    "build":  "astro build",
+    "preview":"astro preview",
+    "assemble": "python scripts/assemble_book.py",
+    "assemble:all": "python scripts/assemble_book.py --all"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.23.0",
+    "astro": "^4.8.0",
+    "rehype-katex": "^7.0.0",
+    "remark-math": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

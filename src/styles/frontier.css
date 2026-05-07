@@ -1,0 +1,255 @@
+/* ============================================================
+   frontier.css
+   Liber Levitatis et Inconstantiae: Frontier
+   Cool, stark, dense — the volatility of the vanguard
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Cinzel:wght@400;600&display=swap');
+
+/* ── Palette ──────────────────────────────────────────────── */
+:root {
+  --frontier-bg:          #0a0e14;
+  --frontier-bg-2:        #0f1520;
+  --frontier-bg-3:        #141d2e;
+  --frontier-surface:     #1a2440;
+  --frontier-text:        #c8d8f0;
+  --frontier-text-muted:  #6a8ab0;
+  --frontier-accent:      #3a8fff;
+  --frontier-accent-cold: #00d4ff;
+  --frontier-accent-warm: #ff6b35;   /* for warnings, deletions */
+  --frontier-rule:        #1e3050;
+  --frontier-code-bg:     #0d1520;
+  --frontier-glow:        rgba(58, 143, 255, 0.15);
+}
+
+/* ── Base ─────────────────────────────────────────────────── */
+body.book-frontier {
+  background-color: var(--frontier-bg);
+  color:            var(--frontier-text);
+  font-family:      'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-size:        0.97rem;
+  line-height:      1.65;
+}
+
+/* Subtle grid overlay — blueprint feel */
+body.book-frontier::before {
+  content:  '';
+  position: fixed;
+  inset:    0;
+  pointer-events: none;
+  z-index:  0;
+  background-image:
+    linear-gradient(rgba(58, 143, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(58, 143, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── Starlight overrides ───────────────────────────────────── */
+body.book-frontier .sl-container,
+body.book-frontier [data-has-sidebar] {
+  background: var(--frontier-bg);
+}
+
+body.book-frontier header.header {
+  background:   var(--frontier-bg-2);
+  border-bottom: 1px solid var(--frontier-rule);
+  font-family:  'DM Mono', monospace;
+  font-size:    0.85rem;
+  letter-spacing: 0.04em;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+body.book-frontier nav.sidebar {
+  background:   var(--frontier-bg-2);
+  border-right: 1px solid var(--frontier-rule);
+  font-family:  'DM Mono', monospace;
+  font-size:    0.82rem;
+}
+
+body.book-frontier .sidebar-content a {
+  color: var(--frontier-text-muted);
+}
+
+body.book-frontier .sidebar-content a:hover {
+  color:  var(--frontier-accent-cold);
+}
+
+body.book-frontier .sidebar-content a[aria-current='page'] {
+  color:         var(--frontier-accent);
+  border-left:   2px solid var(--frontier-accent);
+  padding-left:  0.4em;
+  margin-left:   -0.4em;
+}
+
+body.book-frontier .sidebar-content details summary {
+  font-family:    'DM Mono', monospace;
+  font-size:      0.72rem;
+  letter-spacing: 0.12em;
+  color:          var(--frontier-text-muted);
+  text-transform: uppercase;
+}
+
+/* ── Headings ─────────────────────────────────────────────── */
+body.book-frontier h1,
+body.book-frontier h2,
+body.book-frontier h3,
+body.book-frontier h4 {
+  font-family:  'Space Grotesk', sans-serif;
+  font-weight:  500;
+  color:        var(--frontier-text);
+  letter-spacing: -0.01em;
+}
+
+body.book-frontier h1 {
+  font-size:  2rem;
+  font-weight: 300;
+  color:       var(--frontier-accent-cold);
+  border-bottom: 1px solid var(--frontier-rule);
+  padding-bottom: 0.4em;
+  margin-bottom: 1rem;
+}
+
+body.book-frontier h2 {
+  font-size: 1.25rem;
+  color:     var(--frontier-accent);
+  margin-top: 2.5rem;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--frontier-accent);
+}
+
+body.book-frontier h3 {
+  font-size: 1.05rem;
+  color:     var(--frontier-text-muted);
+  font-family: 'DM Mono', monospace;
+}
+
+body.book-frontier h4 {
+  font-size:   0.9rem;
+  font-family: 'DM Mono', monospace;
+  color:       var(--frontier-text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Links ────────────────────────────────────────────────── */
+body.book-frontier a {
+  color:           var(--frontier-accent);
+  text-decoration: none;
+}
+body.book-frontier a:hover {
+  color:           var(--frontier-accent-cold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── HR ───────────────────────────────────────────────────── */
+body.book-frontier hr {
+  border: none;
+  border-top: 1px solid var(--frontier-rule);
+  margin: 2.5rem 0;
+}
+
+/* ── Code ─────────────────────────────────────────────────── */
+body.book-frontier code {
+  background:    var(--frontier-code-bg);
+  border:        1px solid var(--frontier-rule);
+  border-radius: 3px;
+  padding:       0.1em 0.35em;
+  font-family:   'DM Mono', monospace;
+  font-size:     0.85em;
+  color:         var(--frontier-accent-cold);
+}
+
+body.book-frontier pre {
+  background:   var(--frontier-code-bg);
+  border:       1px solid var(--frontier-rule);
+  border-left:  3px solid var(--frontier-accent);
+  padding:      1.2rem;
+  border-radius: 3px;
+  overflow-x:   auto;
+  box-shadow:   0 0 20px var(--frontier-glow);
+}
+
+body.book-frontier pre code {
+  background: transparent;
+  border:     none;
+  padding:    0;
+  color:      var(--frontier-text);
+}
+
+/* ── Blockquote ───────────────────────────────────────────── */
+body.book-frontier blockquote {
+  border-left:  3px solid var(--frontier-accent);
+  background:   var(--frontier-bg-3);
+  margin:       1.5rem 0;
+  padding:      0.8rem 1.2rem;
+  color:        var(--frontier-text-muted);
+  font-style:   italic;
+}
+
+/* ── Tables ───────────────────────────────────────────────── */
+body.book-frontier table {
+  border-collapse: collapse;
+  width:           100%;
+  font-size:       0.88rem;
+  font-family:     'DM Mono', monospace;
+  margin:          1.5rem 0;
+}
+
+body.book-frontier th {
+  background:     var(--frontier-surface);
+  border:         1px solid var(--frontier-rule);
+  padding:        0.45rem 0.8rem;
+  color:          var(--frontier-accent);
+  font-weight:    500;
+  letter-spacing: 0.04em;
+  text-align:     left;
+}
+
+body.book-frontier td {
+  border:   1px solid var(--frontier-rule);
+  padding:  0.35rem 0.8rem;
+}
+
+body.book-frontier tr:nth-child(even) td {
+  background: var(--frontier-bg-3);
+}
+
+/* ── Admonitions ──────────────────────────────────────────── */
+body.book-frontier .starlight-aside {
+  background:   var(--frontier-bg-3);
+  border-left:  3px solid var(--frontier-accent);
+  border-radius: 0;
+}
+
+body.book-frontier .starlight-aside.starlight-aside--caution {
+  border-left-color: var(--frontier-accent-warm);
+}
+
+/* ── Mermaid ──────────────────────────────────────────────── */
+body.book-frontier .mermaid {
+  background:   var(--frontier-bg-2);
+  border:       1px solid var(--frontier-rule);
+  padding:      1rem;
+  box-shadow:   0 0 24px var(--frontier-glow);
+}
+
+/* ── Math ─────────────────────────────────────────────────── */
+body.book-frontier .math-display {
+  background:   var(--frontier-code-bg);
+  border:       1px solid var(--frontier-rule);
+  padding:      0.8rem 1.2rem;
+  box-shadow:   0 0 12px var(--frontier-glow);
+}
+
+/* ── Version badge ────────────────────────────────────────── */
+body.book-frontier .frontier-version-badge {
+  font-family:    'DM Mono', monospace;
+  font-size:      0.7rem;
+  color:          var(--frontier-text-muted);
+  letter-spacing: 0.08em;
+  text-align:     right;
+  padding:        0.2rem 0.6rem;
+  border-top:     1px solid var(--frontier-rule);
+  margin-top:     3rem;
+}
