@@ -152,7 +152,7 @@ jobs:
       - name: Create archive release
         if: steps.versioning.outputs.archive_triggered == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_AUTH_TOKEN: ${{ secrets.GH_AUTH_TOKEN }}
         run: |
           VERSION="${{ steps.versioning.outputs.frontier_version }}"
           TAG="frontier-v${VERSION}-archive-$(date +'%Y%m%d')"
