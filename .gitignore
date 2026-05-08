@@ -11,4 +11,3 @@ __pycache__/
 # State file IS committed so incremental runs work across Actions checkouts
 # (the workflow uses actions/cache for .assembler_state.json)
 pnpm-workspace.yaml
-pnpm-lock.yaml
