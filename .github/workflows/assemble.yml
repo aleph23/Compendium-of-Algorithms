@@ -2,7 +2,7 @@ name: "Compendium of Algorithms — Biweekly Assembler"
 
 on:
   schedule:
-    - cron: "0 2 1,15 * *"
+    - cron: "0 4 1,15 * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -101,12 +101,12 @@ jobs:
         run: |
           MODE="${{ github.event.inputs.mode || 'incremental' }}"
           if [ "$MODE" = "all" ]; then
-            python scripts/assemble_tome.py --all
+            python scripts/assemble_tome.py --all --bootstrap --target received-canon
           else
             python scripts/assemble_tome.py
           fi
 
-      # ── PHASE 3: Version management ────────────────────────────────────────
+      # PHASE 3: Version management 
       # Computes character-count delta against baseline.
       # Exit 0  → normal (no archive needed)
       # Exit 2  → ≥15% content reduction → archive this version
@@ -129,7 +129,7 @@ jobs:
           echo "Frontier version: $VERSION"
           echo "Archive triggered: $( [ $VERSION_EXIT -eq 2 ] && echo YES || echo no )"
 
-      # ── PHASE 4: Build ─────────────────────────────────────────────────────
+      # PHASE 4: Build 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -147,7 +147,7 @@ jobs:
         run: |
           cp frontier_version.json dist/frontier_version.json 2>/dev/null || true
 
-      # ── PHASE 5: Archive release (conditional) ─────────────────────────────
+      # PHASE 5: Archive release (conditional) 
       # Creates a GitHub Release + ZIP when a significant content reduction fires.
       - name: Create archive release
         if: steps.versioning.outputs.archive_triggered == 'true'
@@ -237,7 +237,7 @@ jobs:
             || echo "Nothing to commit"
           git push origin release-book --force
 
-      # ── PHASE 7: Upload artifact ───────────────────────────────────────────
+      # PHASE 7: Upload artifact 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
@@ -245,6 +245,6 @@ jobs:
           path: /tmp/compendium-dist
           retention-days: 30
 
-      # Uncomment to deploy to GitHub Pages:
-      # - name: Deploy to GitHub Pages
-      #   uses: actions/deploy-pages@v4
+      # deploy to GitHub Pages:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
