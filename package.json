@@ -5,16 +5,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev":    "astro dev",
-    "build":  "astro build",
-    "preview":"astro preview",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
     "assemble": "python scripts/assemble_book.py",
     "assemble:all": "python scripts/assemble_book.py --all"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.23.4",
-    "astro": "^4.16.0",
-    "rehype-katex": "^7.0.0",
+    "astro": "^6.3.1",
+    "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0"
   },
   "engines": {
