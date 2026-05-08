@@ -42,8 +42,16 @@ API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
 if not API_KEY:
     sys.exit("ERROR: LLM_API_KEY environment variable not set.")
 
+# --- DEBUGGING: API Exchange and Key Check ---
+print(f"[DEBUG] Loaded API Key: '{API_KEY[:8]}...{API_KEY[-4:]}' (Length: {len(API_KEY)})")
+
+import logging
+logging.basicConfig(level=logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.DEBUG)
+# ---------------------------------------------
+
 client = anthropic.Anthropic(api_key=API_KEY)
-MODEL      = "claude-sonnet-4-7"      # Use the best available model for quality
+MODEL      = "claude-opus-4-7"      # Use the best available model for quality
 MAX_TOKENS = 32000
 RETRY_SLEEP = 20                    # seconds between rate-limit retries
 MAX_RETRIES = 3
@@ -245,12 +253,15 @@ def call_llm(prompt: str) -> str:
     """Call Agent with retries on rate-limit errors."""
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            msg = client.messages.create(
+            response_text = ""
+            with client.messages.stream(
                 model=MODEL,
                 max_tokens=MAX_TOKENS,
                 messages=[{"role": "user", "content": prompt}],
-            )
-            return msg.content[0].text
+            ) as stream:
+                for text in stream.text_stream:
+                    response_text += text
+            return response_text
         except anthropic.RateLimitError:
             if attempt < MAX_RETRIES:
                 print(f"  ⏳ Rate limited — retrying in {RETRY_SLEEP}s ({attempt}/{MAX_RETRIES})")

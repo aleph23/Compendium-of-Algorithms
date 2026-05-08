@@ -59,7 +59,7 @@ if not API_KEY:
     sys.exit("ERROR: LLM_API_KEY environment variable not set.")
 
 client = anthropic.Anthropic(api_key=API_KEY)
-RESEARCH_MODEL = "claude-sonnet-4-7"   # web_search tool requires a capable model
+RESEARCH_MODEL = "claude-opus-4-7"   # web_search tool requires a capable model
 
 # arXiv category mapping
 # Maps our internal categories → arXiv search terms
