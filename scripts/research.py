@@ -64,14 +64,14 @@ RESEARCH_MODEL = "claude-opus-4-7"   # web_search tool requires a capable model
 # arXiv category mapping
 # Maps our internal categories → arXiv search terms
 ARXIV_QUERIES: dict[str, list[str]] = {
-    "foundations":   ["neural network", "perceptron", "backpropagation", "bayesian", "monte carlo"],
+    "foundational": ["neural network", "perceptron", "backpropagation", "bayesian", "monte carlo"],
     "convolutional": ["convolutional neural network", "CNN", "image recognition"],
-    "recurrent":     ["recurrent neural network", "LSTM", "long short-term memory", "time-series model"],
-    "attention":     ["attention mechanism", "transformer", "language model"],
-    "generative":    ["generative model", "diffusion", "GAN", "adversarial network", "VAE", "auto-encoder", "u-net", "flow matching"],
-    "graph":         ["graph network", "GNN", "geometric deep learning"],
+    "recurrent": ["recurrent neural network", "LSTM", "long short-term memory", "time-series model"],
+    "attention": ["attention mechanism", "transformer", "language model"],
+    "generative": ["generative model", "diffusion", "GAN", "adversarial network", "VAE", "auto-encoder", "u-net", "flow matching"],
+    "graph": ["graph network", "GNN", "geometric deep learning"],
     "reinforcement": ["reinforcement learning", "policy gradient", "deep Q"],
-    "modern":        ["mixture of experts", "state space model", "vision transformer", "SOTA"],
+    "modern": ["mixture of experts", "state space model", "vision transformer", "SOTA"],
 }
 
 # Also run a cross-cutting query for anything new we might have missed
@@ -91,13 +91,13 @@ ARXIV_NS   = "http://www.w3.org/2005/Atom"
 
 def parse_args():
     p = ArgumentParser(description="Compendium of Algorithms — Research Agent")
-    p.add_argument("--days",           type=int, default=14,
+    p.add_argument("--days", type=int, default=18,
                    help="Look-back window in days (default: 14 for biweekly cadence)")
-    p.add_argument("--skip-arxiv",     action="store_true",
+    p.add_argument("--skip-arxiv", action="store_true",
                    help="Skip the arXiv crawl phase")
-    p.add_argument("--skip-pwc",       action="store_true",
+    p.add_argument("--skip-pwc", action="store_true",
                    help="Skip the Papers With Code phase")
-    p.add_argument("--skip-emergent",  action="store_true",
+    p.add_argument("--skip-emergent", action="store_true",
                    help="Skip the emergent-architecture scan (saves ~1 API call)")
     return p.parse_args()
 
@@ -108,9 +108,9 @@ def _arxiv_search(query: str, max_results: int = ARXIV_MAX_RESULTS,
 
     params = parse.urlencode({
         "search_query": f"all:{query}",
-        "sortBy":        "submittedDate",
-        "sortOrder":     "descending",
-        "max_results":   max_results,
+        "sortBy": "submittedDate",
+        "sortOrder": "descending",
+        "max_results": max_results,
     })
     url = f"{ARXIV_BASE}?{params}"
 
@@ -118,7 +118,7 @@ def _arxiv_search(query: str, max_results: int = ARXIV_MAX_RESULTS,
         with request.urlopen(url, timeout=20) as resp:
             xml_bytes = resp.read()
     except (error.URLError, TimeoutError) as exc:
-        print(f"    ⚠️  arXiv fetch failed for '{query}': {exc}")
+        print(f"  ⚠️ arXiv fetch failed for '{query}': {exc}")
         return []
 
     root   = ET.fromstring(xml_bytes)
@@ -139,11 +139,11 @@ def _arxiv_search(query: str, max_results: int = ARXIV_MAX_RESULTS,
         ][:6]  # cap at 6
 
         papers.append({
-            "arxiv_id":  arxiv_id,
-            "title":     title,
-            "authors":   authors,
+            "arxiv_id": arxiv_id,
+            "title": title,
+            "authors": authors,
             "published": published[:10],
-            "abstract":  abstract[:600] + ("…" if len(abstract) > 600 else ""),
+            "abstract": abstract[:600] + ("…" if len(abstract) > 600 else ""),
             "url":       f"https://arxiv.org/abs/{arxiv_id}",
         })
 
@@ -219,11 +219,11 @@ def run_pwc_crawl() -> list[dict]:
     papers = []
     for item in data.get("results", [])[:PAPERS_WITH_CODE_N]:
         papers.append({
-            "title":     item.get("title", ""),
-            "url":       item.get("url_pdf") or item.get("url_abs", ""),
+            "title": item.get("title", ""),
+            "url": item.get("url_pdf") or item.get("url_abs", ""),
             "published": item.get("published", ""),
-            "stars":     item.get("stars", 0),
-            "abstract":  (item.get("abstract") or "")[:500],
+            "stars": item.get("stars", 0),
+            "abstract": (item.get("abstract") or "")[:500],
         })
 
     print(f"   → {len(papers)} paper(s) from Papers With Code")
@@ -241,7 +241,7 @@ def run_emergent_scan(known_ids: list[str]) -> dict:
     print("\n🔍 Phase 3: emergent architecture scan (Agent + web search)")
 
     known_titles = [TOPICS_BY_ID[i]["title"] for i in known_ids if i in TOPICS_BY_ID]
-    known_str    = "\n".join(f"  - {t}" for t in known_titles)
+    known_str = "\n".join(f"  - {t}" for t in known_titles)
 
     prompt = f"""You are a research assistant for the *Compendium of Algorithms* — a living technical reference book on AI neural-network architectures.
 
@@ -258,7 +258,7 @@ Your task: identify AI/ML neural-network architectures or foundational technique
      "id": "kebab-case-id",
      "title": "Full Human-Readable Title",
      "era": "YYYY or YYYY–YYYY",
-     "category": "one of: foundations | convolutional | recurrent | attention | generative | graph | reinforcement | modern",
+     "category": "one of: foundational | convolutional | recurrent | attention | generative | graph | reinforcement | modern",
      "sidebar_order": <integer — place it after the last entry in its category>,
      "depends_on": ["id-of-prerequisite", ...],
      "summary": "One sentence — the core insight.",
@@ -320,8 +320,8 @@ def build_per_topic_context(arxiv_results: dict[str, list[dict]]) -> dict[str, l
     per_topic: dict[str, list[dict]] = {}
 
     for topic in TOPICS:
-        tid      = topic["id"]
-        cat      = topic["category"]
+        tid = topic["id"]
+        cat = topic["category"]
         keywords = set(topic["title"].lower().split())
         keywords.update(topic["summary"].lower().split())
 
@@ -331,7 +331,7 @@ def build_per_topic_context(arxiv_results: dict[str, list[dict]]) -> dict[str, l
 
         for paper in pool:
             haystack = (paper["title"] + " " + paper["abstract"]).lower()
-            score    = sum(1 for kw in keywords if len(kw) > 4 and kw in haystack)
+            score = sum(1 for kw in keywords if len(kw) > 4 and kw in haystack)
             if score > 0:
                 scored.append((score, paper))
 
@@ -344,21 +344,21 @@ def build_per_topic_context(arxiv_results: dict[str, list[dict]]) -> dict[str, l
 
 # 5. WRITE CONTEXT FILE
 def write_context(
-    arxiv_results:  dict[str, list[dict]],
-    pwc_results:    list[dict],
-    emergent:       dict,
-    per_topic:      dict[str, list[dict]],
-    days_back:      int,
+    arxiv_results: dict[str, list[dict]],
+    pwc_results: list[dict],
+    emergent: dict,
+    per_topic: dict[str, list[dict]],
+    days_back: int,
 ):
     context = {
-        "generated_at":     datetime.now(timezone.utc).isoformat(),
-        "coverage_days":    days_back,
-        "coverage_from":    (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d"),
-        "coverage_to":      datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "coverage_days": days_back,
+        "coverage_from": (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d"),
+        "coverage_to": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "arxiv_by_category": arxiv_results,
-        "papers_with_code":  pwc_results,
+        "papers_with_code": pwc_results,
         "emergent": {
-            "summary":    emergent.get("summary", ""),
+            "summary": emergent.get("summary", ""),
             "candidates": emergent.get("candidates", []),
         },
         "per_topic": per_topic,

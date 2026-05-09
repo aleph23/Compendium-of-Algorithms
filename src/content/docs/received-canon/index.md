@@ -7,7 +7,7 @@ hero:
   tagline: "The Received Canon — architectures the discipline has weighed, examined, and accepted into the permanent record."
   actions:
     - text: "Begin with the Perceptron →"
-      link: /received-canon/foundations/perceptron/
+      link: /received-canon/foundational/perceptron/
       variant: primary
     - text: "Frontier →"
       link: /frontier/
@@ -25,4 +25,4 @@ Each article in the Received Canon has been reviewed and admitted by an editor. 
 The Canon is organised by the genealogy of ideas, not by publication date.
 Each architecture is documented with its full formal specification: structural diagrams, operational flow, layer-by-layer decomposition, equations with symbol keys, and plain-English derivations.
 
-Navigate using the sidebar, or begin at the foundations and follow the dependency chain forward.
+Navigate using the sidebar, or begin at the foundational and follow the dependency chain forward.

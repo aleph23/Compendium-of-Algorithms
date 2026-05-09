@@ -33,7 +33,7 @@ import BookSwitcher from "./BookSwitcher.astro";
 <script is:inline>
   (function () {
     if (window.location.pathname.indexOf('/frontier') === -1) return;
-    // Fetch frontier_version.json (served from site root in release-book branch)
+    // Fetch frontier_version.json (served from site root in compendium branch)
     fetch('/frontier_version.json')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (v) {

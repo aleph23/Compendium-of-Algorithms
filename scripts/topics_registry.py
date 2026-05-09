@@ -7,12 +7,12 @@ Add new topics here — the assembler will pick them up on the next run.
 """
 
 TOPICS = [
-    # FOUNDATIONS
+    # FOUNDATIONAL
     {
         "id": "monte-carlo",
         "title": "Monte Carlo Methods",
         "era": "1940s",
-        "category": "foundations",
+        "category": "foundational",
         "sidebar_order": 5,
         "depends_on": [],
         "summary": "Computational algorithms that rely on repeated random sampling to approximate complex mathematical functions.",
@@ -21,7 +21,7 @@ TOPICS = [
         "id": "perceptron",
         "title": "Perceptron",
         "era": "1957–1969",
-        "category": "foundations",
+        "category": "foundational",
         "sidebar_order": 10,
         "depends_on": [],
         "summary": "The original single-layer binary classifier; the atom of all neural networks.",
@@ -30,7 +30,7 @@ TOPICS = [
         "id": "multilayer-perceptron",
         "title": "Multilayer Perceptron (MLP)",
         "era": "1986",
-        "category": "foundations",
+        "category": "foundational",
         "sidebar_order": 20,
         "depends_on": ["perceptron"],
         "summary": "Stacked layers with non-linear activations, trained via backpropagation.",
@@ -39,7 +39,7 @@ TOPICS = [
         "id": "backpropagation",
         "title": "Backpropagation",
         "era": "1986",
-        "category": "foundations",
+        "category": "foundational",
         "sidebar_order": 25,
         "depends_on": ["multilayer-perceptron"],
         "summary": "Chain-rule gradient flow that makes deep network training tractable.",
@@ -48,7 +48,7 @@ TOPICS = [
         "id": "hopfield-network",
         "title": "Hopfield Network",
         "era": "1982",
-        "category": "foundations",
+        "category": "foundational",
         "sidebar_order": 30,
         "depends_on": ["perceptron"],
         "summary": "Recurrent energy-minimising memory; ancestor of modern associative memory.",
@@ -57,7 +57,7 @@ TOPICS = [
         "id": "bayesian-neural-network",
         "title": "Bayesian Neural Network (BNN)",
         "era": "1990s",
-        "category": "foundations",
+        "category": "foundational",
         "sidebar_order": 40,
         "depends_on": ["multilayer-perceptron"],
         "summary": "Replaces deterministic weights with probability distributions to quantify uncertainty.",
@@ -283,7 +283,7 @@ TOPICS_BY_ID = {t["id"]: t for t in TOPICS}
 
 # Canonical category order for sidebar grouping
 CATEGORY_ORDER = [
-    "foundations",
+    "foundational",
     "convolutional",
     "recurrent",
     "attention",
@@ -294,7 +294,7 @@ CATEGORY_ORDER = [
 ]
 
 CATEGORY_LABELS = {
-    "foundations":    "Foundations",
+    "foundational":    "Foundational",
     "convolutional":  "Convolutional Networks",
     "recurrent":      "Recurrent Networks",
     "attention":      "Attention & Transformers",

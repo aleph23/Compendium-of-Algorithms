@@ -1,8 +1,8 @@
 // astro.config.mjs
-import { defineConfig } from "astro/config";
-import starlight from "@astrojs/starlight";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
+import starlight from '@astrojs/starlight'
+import { defineConfig } from 'astro/config'
+import rehypeKatex from 'rehype-katex'
+import remarkMath from 'remark-math'
 
 const BASE = process.env.ASTRO_BASE || "/";
 
@@ -35,23 +35,23 @@ export default defineConfig({
           label: "Liber Primus: Received Canon",
           items: [
             { label: "Introduction", link: "/received-canon/" },
-            { label: "Foundations",             autogenerate: { directory: "received-canon/foundations" } },
-            { label: "Convolutional Networks",  autogenerate: { directory: "received-canon/convolutional" } },
-            { label: "Recurrent Networks",      autogenerate: { directory: "received-canon/recurrent" } },
-            { label: "Attention & Transformers",autogenerate: { directory: "received-canon/attention" } },
-            { label: "Generative Models",       autogenerate: { directory: "received-canon/generative" } },
-            { label: "Graph & Geometric",       autogenerate: { directory: "received-canon/graph" } },
-            { label: "Reinforcement Learning",  autogenerate: { directory: "received-canon/reinforcement" } },
-            { label: "Modern Architectures",    autogenerate: { directory: "received-canon/modern" } },
+            { label: "Foundational", autogenerate: { directory: received-canon/foundational" } },
+            { label: "Convolutional Networks", autogenerate: { directory: "received-canon/convolutional" } },
+            { label: "Recurrent Networks", autogenerate: { directory: "received-canon/recurrent" } },
+            { label: "Attention & Transformers", autogenerate: { directory: "received-canon/attention" } },
+            { label: "Generative Models", autogenerate: { directory: "received-canon/generative" } },
+            { label: "Graph & Geometric",  autogenerate: { directory: "received-canon/graph" } },
+            { label: "Reinforcement Learning", autogenerate: { directory: "received-canon/reinforcement" } },
+            { label: "Modern Architectures", autogenerate: { directory: "received-canon/modern" } },
           ],
         },
         {
           label: "Liber Levitatis et Inconstantiae: Frontier",
           items: [
-            { label: "About Frontier",          link: "/frontier/" },
-            { label: "Emergent Architectures",  autogenerate: { directory: "frontier/emergent" } },
+            { label: "About Frontier", link: "/frontier/" },
+            { label: "Emergent Architectures", autogenerate: { directory: "frontier/emergent" } },
             { label: "Techniques Under Review", autogenerate: { directory: "frontier/under-review" } },
-            { label: "Archived Editions",       autogenerate: { directory: "frontier/archive" } },
+            { label: "Archived Editions", autogenerate: { directory: frontier/archive" } },
           ],
         },
       ],

@@ -289,7 +289,7 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
     # CANON GUARD — hard tripwire
     # The assembler usually ONLY writes inside frontier/.
     # Any path resolving into received-canon/ requires the explicit target.
-    # Use cmd argument '--target received-canon' for updating the main book.
+    # Use cmd argument '--target received-canon' for updating the primary book.
     base_root = CONTENT_DIR / target_dir
 
     # Ensure output directory under target/
@@ -354,7 +354,7 @@ def write_home_index(target_dir: str = "frontier"):
         '  tagline: "Every major neural-network architecture — used, excused, and imaged — from  perceptron to tomorrow."',
         "  actions:",
         '    - text: "Start Reading →"',
-        '      link: /foundations/perceptron/',
+        '      link: /foundational/perceptron/',
         '      variant: primary',
         "---",
         "",

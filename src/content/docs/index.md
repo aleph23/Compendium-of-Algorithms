@@ -7,7 +7,7 @@ hero:
   tagline: "Every major neural-network architecture — used, excused, and imaged — from  perceptron to tomorrow."
   actions:
     - text: "Start Reading →"
-      link: /foundations/perceptron/
+      link: /foundational/perceptron/
       variant: primary
 ---
 
@@ -26,13 +26,13 @@ Each page contains:
 - **Reference material** - Implementation documentation and usage code snippets
 ## Architectures covered
 
-### Foundations
-- [Monte Carlo Methods](/received-canon/foundations/monte-carlo/) — 1940s
-- [Perceptron](/received-canon/foundations/perceptron/) — 1957–1969
-- [Multilayer Perceptron (MLP)](/received-canon/foundations/multilayer-perceptron/) — 1986
-- [Backpropagation](/received-canon/foundations/backpropagation/) — 1986
-- [Hopfield Network](/received-canon/foundations/hopfield-network/) — 1982
-- [Bayesian Neural Network (BNN)](/received-canon/foundations/bayesian-neural-network/) — 1990s
+### Foundational
+- [Monte Carlo Methods](/received-canon/foundational/monte-carlo/) — 1940s
+- [Perceptron](/received-canon/foundational/perceptron/) — 1957–1969
+- [Multilayer Perceptron (MLP)](/received-canon/foundational/multilayer-perceptron/) — 1986
+- [Backpropagation](/received-canon/foundational/backpropagation/) — 1986
+- [Hopfield Network](/received-canon/foundational/hopfield-network/) — 1982
+- [Bayesian Neural Network (BNN)](/received-canon/foundational/bayesian-neural-network/) — 1990s
 
 ### Convolutional Networks
 - [Convolutional Neural Network (CNN)](/received-canon/convolutional/convolutional-neural-network/) — 1989–1998
