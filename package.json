@@ -12,12 +12,12 @@
     "assemble:all": "python scripts/assemble_book.py --all"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.23.4",
+    "@astrojs/starlight": "^0.39.2",
     "astro": "^6.3.1",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   }
 }
