@@ -46,6 +46,70 @@ API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
 if not API_KEY:
     sys.exit("ERROR: LLM_API_KEY environment variable not set.")
 
+# Completion Criteria (Minimum definition of 'has_content')
+COMPLETION_CRITERIA = {
+    "CompletedSection": {
+        "WrittenIntro": "Minimum 5 Paragraphs explanation",
+        "VisualRepresentation": "Minimum 3 Distinct Image/Mermaid Chart",
+        "PertinentEquations": {
+            "CompleteKatexRep": 1,
+            "ThoroughSymbolLegend": 1,
+            "PlainEnglishExpression": 1
+        },
+        "Relations_Historicity": "3 Paragraphs",
+        "DocumentationLinks": 8,
+        "InScopeCodeExamples": 3,
+        "Statement2Citation": "1-to-1 Minimum"
+    }
+}
+
+def is_page_complete(content: str) -> bool:
+    """Check if a generated page meets the minimum completion criteria."""
+    # 1. WrittenIntro: 5 paragraphs in Overview (roughly)
+    overview_match = re.search(r"### 2\. Overview\n(.*?)\n###", content, re.DOTALL)
+    if overview_match:
+        intro_text = overview_match.group(1).strip()
+        paragraphs = [p for p in intro_text.split("\n\n") if len(p.strip()) > 50]
+        if len(paragraphs) < 5:
+            return False
+    else:
+        return False
+
+    # 2. VisualRepresentation: 3 Mermaid charts
+    mermaid_blocks = re.findall(r"```mermaid", content)
+    if len(mermaid_blocks) < 3:
+        return False
+
+    # 3. PertinentEquations: Katex, Legend, Plain English
+    # Check for at least one equation block with a table (legend) and a following paragraph
+    equation_blocks = re.findall(r"\$\$.*?\$\$.*?\|.*?\|.*?\n\n", content, re.DOTALL)
+    if not equation_blocks:
+        return False
+
+    # 4. Relations & Historicity: 3 Paragraphs
+    historicity_match = re.search(r"### 12\. Relations & Historicity\n(.*?)\n###", content, re.DOTALL)
+    if historicity_match:
+        hist_text = historicity_match.group(1).strip()
+        paragraphs = [p for p in hist_text.split("\n\n") if len(p.strip()) > 50]
+        if len(paragraphs) < 3:
+            return False
+    else:
+        return False
+
+    # 5. DocumentationLinks: 8
+    links = re.findall(r"\[.*?\]\(http.*?\)", content)
+    if len(links) < 8:
+        return False
+
+    # 6. InScopeCodeExamples: 3
+    code_blocks = re.findall(r"```[a-z]+\n", content)
+    # Subtract mermaid blocks
+    non_mermaid_code = len(code_blocks) - len(mermaid_blocks)
+    if non_mermaid_code < 3:
+        return False
+
+    return True
+
 # --- DEBUGGING: API Exchange and Key Check ---
 print(f"[DEBUG] Loaded API Key: '{API_KEY[:8]}...{API_KEY[-4:]}' (Length: {len(API_KEY)})")
 
@@ -140,6 +204,16 @@ def build_prompt(topic: dict, all_topics: list[dict], research_ctx: dict = {}, t
       Systems and Their Occasional Interdependence* — a living reference on AI neural-network architectures. Your audience ranges from new engineers to seasoned ML researchers needing reference
       material. Write with precision and clarity.
 
+## Completion Criteria (HARD REQUIREMENTS)
+You MUST satisfy the following criteria in your response:
+- **Written Intro**: Minimum 5 Paragraphs of detailed explanation.
+- **Visual Representation**: Minimum 3 Distinct and detailed Mermaid Charts (Flowcharts, Sequence, State, etc.).
+- **Pertinent Equations**: Every key equation MUST have: 1) A KaTeX representation ($$ ... $$), 2) A thorough Symbol Legend table, and 3) A cohesive plain-English expression paragraph.
+- **Relations & Historicity**: Minimum 3 Paragraphs explaining lineage, related architectures, and historical significance.
+- **Documentation Links**: Minimum 8 high-quality outgoing links to papers, documentation, or repositories.
+- **In-Scope Code Examples**: Minimum 3 distinct code snippets showing implementation or usage.
+- **Statement to Citation**: Aim for a 1-to-1 ratio of technical claims to cited sources/links where possible.
+
 ## Assignment
 Write a complete Starlight-compatible Markdown page for the following architecture:
 
@@ -175,48 +249,54 @@ Use `graph TD` orientation.  Label each node with its widely recognized name.
 Wrap in a fenced code block: ```mermaid ... ```
 
 ### 4. Operational Flow  (Mermaid sequence or state diagram)
-Emit a **Mermaid sequenceDiagram or stateDiagram-v2** tracing one full pass through the architecture step by step.  Multiple diagrams are allowed if needed for clarity.
+Emit a **Mermaid sequenceDiagram or stateDiagram-v2** tracing one full pass through the architecture step by step. 
 
-### 5. Layer Breakdown
+### 5. Detailed Component Interaction (Mermaid diagram)
+Emit a third **Mermaid diagram** (e.g., classDiagram, stateDiagram, or another flowchart) focusing on a specific complex sub-component or data-transformation logic.
+
+### 6. Layer Breakdown
 For each distinct layer-type in this architecture, create a sub-section `#### LayerName` containing:
 - **Purpose**: one sentence
 - **Inputs / Outputs**: shape notation (e.g., `(B, T, d_model)`)
 - **Learnable parameters**: list with shapes
 - **Key hyperparameters**: list
-- **Effective methods**: list with `code` examples
+- **Effective methods**: list with `code` examples (this counts toward your code example quota)
 
-### 6. Core Equations
+### 7. Core Equations
 For EACH key equation:
-1. Display the equation in LaTeX inside a `$$...$$` block.
+1. Display the equation in LaTeX inside a `$$ ... $$` block.
 2. Immediately follow with a **Symbol Key** table:
 
 | Symbol | Plain-English meaning |
 |--------|-----------------------|
 | symbol | meaning |
 
-3. Then write a **Plain-English Paragraph** — one cohesive paragraph that describes exactly what the equation computes, with every symbol's name in parentheses after the corresponding English word.  Example style: "The output (y-hat) is computed by multiplying the input vector (x) by the weight matrix (W) and adding the bias (b)..."
+3. Then write a **Plain-English Paragraph** — one cohesive paragraph that describes exactly what the equation computes, with every symbol's name in parentheses after the corresponding English word. 
 
-### 7. Complexity Analysis
+### 8. Complexity Analysis
 Table with rows: Time Complexity, Space Complexity, Typical Parameter Count, Typical FLOP Count (per forward pass).
 
-### 8. Strengths & Limitations
+### 9. Strengths & Limitations
 Two bullet lists.
 
-### 9. Key Milestones
+### 10. Key Milestones
 Timeline of important papers or model releases related to this architecture (3–7 items) with links.
 Format: `- **YYYY** — ![link](*Paper title*) — one-line impact`
 
-### 10. Reference Material
+### 11. Reference Material
 Off-site reference material, implementation documentation, code examples/snippets.
 
-### 11. See Also
+### 12. Relations & Historicity
+Minimum 3 paragraphs on the evolution of this architecture, its predecessors, its descendants, and its place in the broader AI history.
+
+### 13. See Also
 Cross-links to related topics in this book. Use Starlight relative links:
 `Topic Title`
 
 ## Style Rules
 - Err of the side of too much information
-- Always embed documentation links as much and as often as possible.
-- All new research must be appropriately sited and linked.
+- Always embed documentation links as much and as often as possible (Minimum 8).
+- All new research must be appropriately cited and linked.
 - Use `:::note`, `:::tip`, `:::caution` admonitions sparingly for genuinely important callouts.
 - All math MUST be valid KaTeX (used by Starlight).
 - All Mermaid MUST be valid Mermaid v10+ syntax. Avoid parentheses in node labels; use square brackets.
@@ -395,8 +475,12 @@ def main():
     # We check if the state is empty or if the target directory has no architecture pages
     target_path = CONTENT_DIR / args.target
     existing_pages = list(target_path.rglob("*.md"))
-    # Filter out index.md files to see if actual content exists
-    has_content = any(p.name != "index.md" for p in existing_pages)
+    # Filter out index.md files and check if actual content meets minimum criteria
+    architecture_pages = [p for p in existing_pages if p.name != "index.md"]
+    
+    # has_content is True ONLY if there are architecture pages AND they are all complete
+    has_content = len(architecture_pages) > 0 and all(is_page_complete(p.read_text()) for p in architecture_pages)
+    
     bootstrap_mode = not state or not has_content
 
     if bootstrap_mode:
