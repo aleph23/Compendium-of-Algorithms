@@ -95,7 +95,7 @@ jobs:
 
       # PHASE 2: Assembly
       # Writes only to src/content/docs/frontier/ (canon guard enforced).
-      - name: Run AI Assembler 
+      - name: Run AI Assembler
         env:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
         run: |
@@ -133,7 +133,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '24.x'
           cache: npm
 
       - name: Install Node dependencies
