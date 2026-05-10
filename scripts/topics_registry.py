@@ -289,7 +289,7 @@ TOPICS = [
         "depends_on": [],
         "summary": "",
     }
-}
+}]
 
 # Build a fast lookup by id
 TOPICS_BY_ID = {t["id"]: t for t in TOPICS}

@@ -11,8 +11,8 @@ on:
         default: "incremental"
         type: choice
         options:
-          - incremental
-          - all
+          - "incremental"
+          - "all"
       skip_research:
         description: "Skip research phase (use cached context)"
         required: false
