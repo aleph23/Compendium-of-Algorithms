@@ -33,9 +33,12 @@ CONTENT_DIR   = ROOT / "src" / "content" / "docs"
 STATE_FILE    = ROOT / ".assembler_state.json"   # tracks content hashes
 CONTEXT_FILE  = ROOT / "research_context.json"   # written by research.py
 
-args = argparse.ArgumentParser()
-target_dir = args.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
-bootstrap = args.add_argument("--bootstrap", action="store_true", help="Inject foundational tone instructions for initial creation")
+parser = argparse.ArgumentParser()
+parser.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
+parser.add_argument("--bootstrap", action="store_true", help="Inject foundational tone instructions for initial creation")
+parser.add_argument("--all", action="store_true", help="Force-regenerate every topic")
+parser.add_argument("--topic", help="Regenerate one topic by id")
+args = parser.parse_args()
 
 # Import topic registry
 sys.path.insert(0, str(Path(__file__).parent))
@@ -298,7 +301,7 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
     # Paranoid resolution check — catches symlink tricks too
     resolved = out_path.resolve()
     canon_resolved = (CONTENT_DIR / "received-canon").resolve()
-    if target_dir != "received-canon" & bootstrap is False:
+    if target_dir != "received-canon" and not bootstrap:
         assert not str(resolved).startswith(str(canon_resolved)), (
             f"CANON GUARD VIOLATION: attempted write to received-canon path: {resolved}"
         )
@@ -390,15 +393,20 @@ def main():
     research_ctx = load_research_context()
 
     # Determine work queue
-    queue = [t for t in TOPICS if needs_update(t, state)]
+    if args.all:
+        queue = TOPICS
+    elif args.topic:
+        queue = [t for t in TOPICS if t["id"] == args.topic]
+    else:
+        queue = [t for t in TOPICS if needs_update(t, state)]
 
-    if not queue & bootstrap is False:
+    if not queue and not args.bootstrap:
         print("✨ Everything is up-to-date. Nothing to regenerate.")
     else:
         print(f"🚀 Assembler starting — {len(queue)} topic(s) to generate\n")
         for topic in queue:
             try:
-                write_topic_page(topic, research_ctx, target_dir, args.bootstrap)
+                write_topic_page(topic, research_ctx, args.target, args.bootstrap)
                 state[topic["id"]] = {
                     "hash": topic_hash(topic),
                     "generated": datetime.now(timezone.utc).isoformat(),
@@ -414,8 +422,8 @@ def main():
     print("\n📚 Writing category indices…")
     for cat in CATEGORY_ORDER:
         if cat_topics := [t for t in TOPICS if t["category"] == cat]:
-            write_category_index(cat, cat_topics, target_dir)
-    write_home_index(target_dir)
+            write_category_index(cat, cat_topics, args.target)
+    write_home_index(args.target)
 
     print(f"\n🎉 Done — {len(queue)} page(s) generated, indices updated.")
 

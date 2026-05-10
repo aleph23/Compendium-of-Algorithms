@@ -8,8 +8,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "assemble": "python scripts/assemble_book.py",
-    "assemble:all": "python scripts/assemble_book.py --all"
+    "assemble": "python scripts/assemble_tome.py",
+    "assemble:all": "python scripts/assemble_tome.py --all"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.39.2",
