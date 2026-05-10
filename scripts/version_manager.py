@@ -27,9 +27,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT            = Path(__file__).parent.parent
-FRONTIER_DIR    = ROOT / "src" / "content" / "docs" / "frontier"
-VERSION_FILE    = ROOT / "frontier_version.json"
+ROOT = Path(__file__).parent.parent
+FRONTIER_DIR = ROOT / "src" / "content" / "docs" / "frontier"
+VERSION_FILE = ROOT / "frontier_version.json"
 
 MINOR_THRESHOLD = 0.15   # 15% change triggers minor bump
 MAJOR_THRESHOLD = 0.75   # 75% cumulative change triggers major bump
@@ -52,58 +52,55 @@ def load_version() -> dict:
         return json.loads(VERSION_FILE.read_text())
     # First ever run
     return {
-        "major":                 1,
-        "minor":                 0,
-        "char_count_baseline":   0,
+        "major": 0,
+        "minor": 0,
+        "char_count_baseline": 0,
         "char_count_last_major": 0,
-        "last_updated":          datetime.now(timezone.utc).isoformat(),
-        "history":               [],
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "history": [],
     }
-
 
 def save_version(v: dict):
     VERSION_FILE.write_text(json.dumps(v, indent=2))
 
-
 def version_str(v: dict) -> str:
     return f"{v['major']}.{v['minor']}"
-
 
 def log_event(v: dict, chars: int, event: str):
     v["history"].append({
         "version": version_str(v),
-        "date":    datetime.now(timezone.utc).isoformat()[:10],
-        "chars":   chars,
-        "event":   event,
+        "date": datetime.now(timezone.utc).isoformat()[:10],
+        "chars": chars,
+        "event": event,
     })
     v["last_updated"] = datetime.now(timezone.utc).isoformat()
 
 
-# ── Main logic ────────────────────────────────────────────────────────────────
+# Main logic
 
 def run():
     global ARCHIVE_TRIGGERED
 
     current = count_chars()
-    v       = load_version()
+    v = load_version()
 
     print(f"\n📊 Frontier Version Manager")
-    print(f"   Current version : {version_str(v)}")
-    print(f"   Current chars   : {current:,}")
-    print(f"   Baseline chars  : {v['char_count_baseline']:,}")
-    print(f"   Last-major chars: {v['char_count_last_major']:,}")
+    print(f"Current version: {version_str(v)}")
+    print(f"Current chars: {current:,}")
+    print(f"Baseline chars: {v['char_count_baseline']:,}")
+    print(f"Last-major chars: {v['char_count_last_major']:,}")
 
-    # ── Bootstrap first run ───────────────────────────────────────────────────
+    # Bootstrap first run
     if v["char_count_baseline"] == 0:
-        v["char_count_baseline"]   = current
+        v["char_count_baseline"] = current
         v["char_count_last_major"] = current
         log_event(v, current, "init")
         save_version(v)
         print("   → First run: baseline established.")
         return
 
-    baseline    = v["char_count_baseline"]
-    last_major  = v["char_count_last_major"]
+    baseline = v["char_count_baseline"]
+    last_major = v["char_count_last_major"]
 
     if baseline == 0:
         delta_pct = 0.0
@@ -116,25 +113,25 @@ def run():
         # Cumulative drift (unsigned) since last major
         cumulative_pct = abs(current - last_major) / last_major
 
-    print(f"   Delta vs baseline       : {delta_pct:+.1%}")
-    print(f"   Cumulative vs last major: {cumulative_pct:.1%}")
+    print(f" Delta vs baseline: {delta_pct:+.1%}")
+    print(f" Cumulative vs last major: {cumulative_pct:.1%}")
 
-    # ── Check major version first (takes priority) ────────────────────────────
+    # Check major version first (takes priority)
     if cumulative_pct >= MAJOR_THRESHOLD:
-        v["major"]                += 1
-        v["minor"]                 = 0
+        v["major"] += 1
+        v["minor"] = 0
         v["char_count_last_major"] = current
-        v["char_count_baseline"]   = current
+        v["char_count_baseline"] = current
         log_event(v, current, f"major bump — {cumulative_pct:.1%} cumulative drift")
         save_version(v)
         print(f"\n🎉 MAJOR VERSION → {version_str(v)}  ({cumulative_pct:.1%} cumulative drift)")
         return
 
-    # ── Check minor / archive ─────────────────────────────────────────────────
+    # Check minor / archive
     if abs(delta_pct) >= MINOR_THRESHOLD:
-        v["minor"]               += 1
+        v["minor"] += 1
         v["char_count_baseline"]  = current
-        event_label               = f"minor bump — {delta_pct:+.1%} delta"
+        event_label = f"minor bump — {delta_pct:+.1%} delta"
 
         if delta_pct <= -MINOR_THRESHOLD:
             # Significant content reduction → archive this version
@@ -144,10 +141,9 @@ def run():
 
         log_event(v, current, event_label)
         save_version(v)
-        print(f"   → Minor bump → {version_str(v)}")
+        print(f" → Minor bump → {version_str(v)}")
     else:
-        print(f"   → No version change (delta {delta_pct:+.1%}, threshold ±{MINOR_THRESHOLD:.0%})")
-
+        print(f" → No version change (delta {delta_pct:+.1%}, threshold ±{MINOR_THRESHOLD:.0%})")
     save_version(v)
 
 

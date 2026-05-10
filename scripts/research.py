@@ -376,8 +376,8 @@ def write_context(
         for c in candidates:
             urls = c.pop("source_urls", [])
             print(f"\n    # Sources: {', '.join(urls)}")
-            print(f"    {json.dumps(c, indent=4)},")
-        print("═" * 70 + "\n")
+            print(f" {json.dumps(c, indent=4)},")
+        print("═" * 70 + "\n`")
 
 
 # MAIN

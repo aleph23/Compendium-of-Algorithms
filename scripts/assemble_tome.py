@@ -34,7 +34,6 @@ STATE_FILE    = ROOT / ".assembler_state.json"   # tracks content hashes
 CONTEXT_FILE  = ROOT / "research_context.json"   # written by research.py
 
 args = argparse.ArgumentParser()
-all = args.add_argument("--all", action="store_true", help="Regenerate every topic")
 target_dir = args.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
 bootstrap = args.add_argument("--bootstrap", action="store_true", help="Inject foundational tone instructions for initial creation")
 
@@ -90,15 +89,14 @@ def format_research_block(topic: dict, ctx: dict) -> str:
     tid = topic["id"]
     lines   = []
 
-    # Per-topic recent papers 
+    # Per-topic recent papers
     papers = ctx.get("per_topic", {}).get(tid, [])
     if papers:
-        lines.append("## Recent Research Intelligence")
-        lines.append(
-            "The following papers were published in the last "
-            f"{ctx.get('coverage_days', 14)} days and are likely relevant to this topic. "
-            "Cite them by URL where appropriate, and integrate any novel findings or "
-            "corrections into the page content.\n"
+        lines.extend(
+            (
+                "## Recent Research Intelligence",
+                f"The following papers were published in the last {ctx.get('coverage_days', 14)} days and are likely relevant to this topic. Cite them by URL where appropriate, and integrate any novel findings or corrections into the page content.\n",
+            )
         )
         for p in papers:
             authors_str = ", ".join(p.get("authors", []))
@@ -109,9 +107,7 @@ def format_research_block(topic: dict, ctx: dict) -> str:
                 f" Abstract excerpt: {p.get('abstract', '')}\n"
             )
 
-    # emergent candidates note 
-    emergent_summary = ctx.get("emergent", {}).get("summary", "")
-    if emergent_summary:
+    if emergent_summary := ctx.get("emergent", {}).get("summary", ""):
         lines.append(
             "\n:::note\n"
             f"**Broader landscape note:** {emergent_summary}\n"
@@ -123,7 +119,7 @@ def format_research_block(topic: dict, ctx: dict) -> str:
 
 
 # PROMPT TEMPLATE
-def build_prompt(topic: dict, all_topics: list[dict], research_ctx: dict = {}, target_dir: str = "frontier", is_bootstrap: bool = False) -> str:
+def build_prompt(topic: dict, all_topics: list[dict], research_ctx: dict = {}, target_dir: str = "frontier", bootstrap: bool = False) -> str:
     """Build the full generation prompt for one architecture topic."""
     dep_titles = [
         TOPICS_BY_ID[d]["title"]
@@ -140,8 +136,8 @@ def build_prompt(topic: dict, all_topics: list[dict], research_ctx: dict = {}, t
             "Do NOT mention that the book is new, a work in progress, or being written—act as if this is a finished, prestigious reference manual.\n"
         )
 
-    prompt_template = f"""As a professional technical author write a chapter of the *Compendium of Algorithms: The Formal Specification and Structural Composition of Probabilistic Computational 
-      Systems and Their Occasional Interdependence* — a living reference on AI neural-network architectures. Your audience ranges from new engineers to seasoned ML researchers needing reference 
+    prompt_template = f"""As a professional technical author write a chapter of the *Compendium of Algorithms: The Formal Specification and Structural Composition of Probabilistic Computational
+      Systems and Their Occasional Interdependence* — a living reference on AI neural-network architectures. Your audience ranges from new engineers to seasoned ML researchers needing reference
       material. Write with precision and clarity.
 
 ## Assignment
@@ -235,9 +231,7 @@ Cross-links to related topics in this book. Use Starlight relative links:
 
 # STATE MANAGEMENT
 def load_state() -> dict:
-    if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text())
-    return {}
+    return json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
 
 def save_state(state: dict):
     STATE_FILE.write_text(json.dumps(state, indent=2))
@@ -267,21 +261,20 @@ def call_llm(prompt: str) -> str:
                     response_text += text
             return response_text
         except anthropic.RateLimitError:
-            if attempt < MAX_RETRIES:
-                print(f"  ⏳ Rate limited — retrying in {RETRY_SLEEP}s ({attempt}/{MAX_RETRIES})")
-                time.sleep(RETRY_SLEEP * attempt)
-            else:
+            if attempt >= MAX_RETRIES:
                 raise
+            print(f"  ⏳ Rate limited — retrying in {RETRY_SLEEP}s ({attempt}/{MAX_RETRIES})")
+            time.sleep(RETRY_SLEEP * attempt)
         except anthropic.APIStatusError as e:
             print(f"  ⚠️  API error: {e.status_code} — {e.message}")
             raise
 
 
-def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "frontier", is_bootstrap: bool = False) -> Path:
+def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "frontier", bootstrap: bool = False) -> Path:
     """Generate and write a Markdown page for one topic. Returns the output path."""
     print(f"  📝 Generating: {topic['title']}")
 
-    prompt   = build_prompt(topic, TOPICS, research_ctx, target_dir, is_bootstrap)
+    prompt   = build_prompt(topic, TOPICS, research_ctx, target_dir, bootstrap)
     markdown = call_llm(prompt)
 
     # Strip any accidental leading/trailing whitespace or code fences
@@ -303,14 +296,13 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
     out_path = category_dir / f"{topic['id']}.md"
 
     # Paranoid resolution check — catches symlink tricks too
-    try:
-        resolved = out_path.resolve()
-        canon_resolved = (CONTENT_DIR / "received-canon").resolve()
-        if target_dir != "received-canon" & not bootstrap:
-            assert not str(resolved).startswith(str(canon_resolved)), (
-                f"CANON GUARD VIOLATION: attempted write to received-canon path: {resolved}"
-            )
-            
+    resolved = out_path.resolve()
+    canon_resolved = (CONTENT_DIR / "received-canon").resolve()
+    if target_dir != "received-canon" & bootstrap is False:
+        assert not str(resolved).startswith(str(canon_resolved)), (
+            f"CANON GUARD VIOLATION: attempted write to received-canon path: {resolved}"
+        )
+
     out_path.write_text(markdown, encoding="utf-8")
     print(f"  ✅  Written → {out_path.relative_to(ROOT)}")
     return out_path
@@ -318,6 +310,7 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
 
 # INDEX GENERATION
 def write_category_index(category: str, topics_in_cat: list[dict], target_dir: str = "frontier"):
+    # sourcery skip: for-append-to-extend
     """Write a category landing page listing all topics."""
     label = CATEGORY_LABELS.get(category, category.title())
     target_label = target_dir.replace("-", " ").title()
@@ -344,6 +337,7 @@ def write_category_index(category: str, topics_in_cat: list[dict], target_dir: s
 
 
 def write_home_index(target_dir: str = "frontier"):
+    # sourcery skip: for-append-to-extend
     """Write the root index page."""
     lines = [
         "---",
@@ -389,7 +383,6 @@ def write_home_index(target_dir: str = "frontier"):
 
 
 def main():
-    args = parse_args()
     state = load_state()
     CONTENT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -397,12 +390,9 @@ def main():
     research_ctx = load_research_context()
 
     # Determine work queue
-    if args.all:
-        queue = TOPICS
-    else:
-        queue = [t for t in TOPICS if needs_update(t, state)]
+    queue = [t for t in TOPICS if needs_update(t, state)]
 
-    if not queue && not bootstrap:
+    if not queue & bootstrap is False:
         print("✨ Everything is up-to-date. Nothing to regenerate.")
     else:
         print(f"🚀 Assembler starting — {len(queue)} topic(s) to generate\n")
@@ -410,9 +400,9 @@ def main():
             try:
                 write_topic_page(topic, research_ctx, target_dir, args.bootstrap)
                 state[topic["id"]] = {
-                    "hash":      topic_hash(topic),
+                    "hash": topic_hash(topic),
                     "generated": datetime.now(timezone.utc).isoformat(),
-                    "title":     topic["title"],
+                    "title": topic["title"],
                 }
                 save_state(state)          # save after each page (crash-safe)
                 time.sleep(1)              # polite pacing
@@ -423,8 +413,7 @@ def main():
 
     print("\n📚 Writing category indices…")
     for cat in CATEGORY_ORDER:
-        cat_topics = [t for t in TOPICS if t["category"] == cat]
-        if cat_topics:
+        if cat_topics := [t for t in TOPICS if t["category"] == cat]:
             write_category_index(cat, cat_topics, target_dir)
     write_home_index(target_dir)
 

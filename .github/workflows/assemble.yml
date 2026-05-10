@@ -133,7 +133,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24.x'
+          node-version: '`24.x'
           cache: npm
 
       - name: Install Node dependencies
@@ -147,55 +147,55 @@ jobs:
         run: |
           cp frontier_version.json dist/frontier_version.json 2>/dev/null || true
 
-      # PHASE 5: Archive release (conditional)
-      # Creates a GitHub Release + ZIP when a significant content reduction fires.
-      - name: Create archive release
-        if: steps.versioning.outputs.archive_triggered == 'true'
-        env:
-          GH_AUTH_TOKEN: ${{ secrets.GH_AUTH_TOKEN }}
-        run: |
-          VERSION="${{ steps.versioning.outputs.frontier_version }}"
-          TAG="frontier-v${VERSION}-archive-$(date +'%Y%m%d')"
-
-          # Build ZIP of current Frontier compiled pages
-          zip -r "frontier-archive-${VERSION}.zip" dist/ \
-            --include "dist/frontier/*" -q
-
-          # Auto-generate changelog from research log
-          CHANGELOG=$(python - << 'PYEOF'
-          import json, pathlib
-          lines = ["## Frontier Archive — Auto-generated Changelog\n"]
-          ctx_path = pathlib.Path("research_context.json")
-          if ctx_path.exists():
-              ctx = json.loads(ctx_path.read_text())
-              emergent = ctx.get("emergent", {})
-              summary = emergent.get("summary", "")
-              if summary:
-                  lines.append(f"**Research summary:** {summary}\n")
-              cands = emergent.get("candidates", [])
-              if cands:
-                  lines.append("**emergent candidates identified this cycle:**")
-                  for c in cands:
-                      lines.append(f"- [{c.get('era','')}] {c.get('title','')} — {c.get('summary','')}")
-          ver_path = pathlib.Path("frontier_version.json")
-          if ver_path.exists():
-              v = json.loads(ver_path.read_text())
-              history = v.get("history", [])
-              if history:
-                  lines.append("\n**Version history:**")
-                  for h in history[-5:]:
-                      lines.append(f"- v{h['version']} ({h['date']}) — {h['event']}")
-          print("\n".join(lines))
-          PYEOF
-          )
-
-          gh release create "$TAG" \
-            "frontier-archive-${VERSION}.zip#Frontier Compiled Site" \
-            --title "Frontier Archive v${VERSION} ($(date +'%Y-%m-%d'))" \
-            --notes "$CHANGELOG" \
-            --prerelease
-
-          echo "Created GitHub Release: $TAG"
+#      # PHASE 5: Archive release (conditional)
+#      # Creates a GitHub Release + ZIP when a significant content reduction fires.
+#      - name: Create archive release
+#        if: steps.versioning.outputs.archive_triggered == 'true'
+#        env:
+#          GH_AUTH_TOKEN: ${{ secrets.GH_AUTH_TOKEN }}
+#        run: |
+#          VERSION="${{ steps.versioning.outputs.frontier_version }}"
+#          TAG="frontier-v${VERSION}-archive-$(date +'%Y%m%d')"
+#
+#          # Build ZIP of current Frontier compiled pages
+#         zip -r "frontier-archive-${VERSION}.zip" dist/ \
+ #           --include "dist/frontier/*" -q
+#
+#          # Auto-generate changelog from research log
+#          CHANGELOG=$(python - << 'PYEOF'
+#          import json, pathlib
+#          lines = ["## Frontier Archive — Auto-generated Changelog\n"]
+#          ctx_path = pathlib.Path("research_context.json")
+#          if ctx_path.exists():
+#              ctx = json.loads(ctx_path.read_text())
+#              emergent = ctx.get("emergent", {})
+#              summary = emergent.get("summary", "")
+#              if summary:
+#                  lines.append(f"**Research summary:** {summary}\n")
+#              cands = emergent.get("candidates", [])
+#              if cands:
+#                  lines.append("**emergent candidates identified this cycle:**")
+#                  for c in cands:
+#                      lines.append(f"- [{c.get('era','')}] {c.get('title','')} — {c.get('summary','')}")
+#          ver_path = pathlib.Path("frontier_version.json")
+#          if ver_path.exists():
+#              v = json.loads(ver_path.read_text())
+#              history = v.get("history", [])
+#              if history:
+#                  lines.append("\n  **Version history:**")
+#                 for h in history[-5:]:
+#                     lines.append(f"- v{h['version']} ({h['date']}) — {h['event']}")
+#         print("\n".join(lines))
+#         PYEOF
+#         )
+#
+#          gh release create "$TAG" \
+#            "frontier-archive-${VERSION}.zip#Frontier Compiled Site" \
+#            --title "Frontier Archive v${VERSION} ($(date +'%Y-%m-%d'))" \
+#            --notes "$CHANGELOG" \
+#            --prerelease
+#
+#          echo "Created GitHub Release: $TAG"
 
       # PHASE 6: Publish to compendium branch
       - name: Publish to compendium branch
@@ -238,11 +238,12 @@ jobs:
           git push origin compendium --force
 
       # PHASE 7: Upload artifacts & deploy to GitHub Pages:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
           name: compendium-${{ github.run_number }}-frontier-v${{ steps.versioning.outputs.frontier_version }}
           path: /tmp/compendium-dist
           retention-days: 30
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
