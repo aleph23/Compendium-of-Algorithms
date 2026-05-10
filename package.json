@@ -9,7 +9,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "assemble": "python scripts/assemble_tome.py",
-    "assemble:all": "python scripts/assemble_tome.py --all"
+    "assemble:received": "python scripts/assemble_tome.py --target received-canon"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.39.2",

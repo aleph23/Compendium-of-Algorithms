@@ -35,9 +35,6 @@ CONTEXT_FILE  = ROOT / "research_context.json"   # written by research.py
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
-parser.add_argument("--bootstrap", action="store_true", help="Inject foundational tone instructions for initial creation")
-parser.add_argument("--all", action="store_true", help="Force-regenerate every topic")
-parser.add_argument("--topic", help="Regenerate one topic by id")
 args = parser.parse_args()
 
 # Import topic registry
@@ -300,8 +297,10 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
 
     # Paranoid resolution check — catches symlink tricks too
     resolved = out_path.resolve()
-    canon_resolved = (CONTENT_DIR / "received-canon").resolve()
-    if target_dir != "received-canon" and not bootstrap:
+    # We only enforce the guard if the target is NOT received-canon.
+    # If the target IS received-canon, we obviously intend to write there.
+    if target_dir != "received-canon":
+        canon_resolved = (CONTENT_DIR / "received-canon").resolve()
         assert not str(resolved).startswith(str(canon_resolved)), (
             f"CANON GUARD VIOLATION: attempted write to received-canon path: {resolved}"
         )
@@ -392,21 +391,36 @@ def main():
     # Load research context (produced by research.py)
     research_ctx = load_research_context()
 
-    # Determine work queue
-    if args.all:
-        queue = TOPICS
-    elif args.topic:
-        queue = [t for t in TOPICS if t["id"] == args.topic]
-    else:
-        queue = [t for t in TOPICS if needs_update(t, state)]
+    # Determine if we are in bootstrap mode (repo not populated)
+    # We check if the state is empty or if the target directory has no architecture pages
+    target_path = CONTENT_DIR / args.target
+    existing_pages = list(target_path.rglob("*.md"))
+    # Filter out index.md files to see if actual content exists
+    has_content = any(p.name != "index.md" for p in existing_pages)
+    bootstrap_mode = not state or not has_content
 
-    if not queue and not args.bootstrap:
+    if bootstrap_mode:
+        print("🐣 Bootstrap mode detected — queueing all topics for initial construction")
+        queue = TOPICS
+    else:
+        # Incremental mode: topics changed in registry OR topics with new research findings
+        queue = []
+        research_topics = research_ctx.get("per_topic", {})
+        
+        for t in TOPICS:
+            if needs_update(t, state):
+                queue.append(t)
+            elif t["id"] in research_topics and research_topics[t["id"]]:
+                print(f"  🔍 New research found for {t['title']}, adding to queue")
+                queue.append(t)
+
+    if not queue:
         print("✨ Everything is up-to-date. Nothing to regenerate.")
     else:
         print(f"🚀 Assembler starting — {len(queue)} topic(s) to generate\n")
         for topic in queue:
             try:
-                write_topic_page(topic, research_ctx, args.target, args.bootstrap)
+                write_topic_page(topic, research_ctx, args.target, bootstrap_mode)
                 state[topic["id"]] = {
                     "hash": topic_hash(topic),
                     "generated": datetime.now(timezone.utc).isoformat(),
