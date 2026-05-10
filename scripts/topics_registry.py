@@ -7,7 +7,7 @@ Add new topics here — the assembler will pick them up on the next run.
 """
 
 TOPICS = [
-{ "book one":
+
     # FOUNDATIONAL
     {
         "id": "monte-carlo",
@@ -276,10 +276,8 @@ TOPICS = [
         "sidebar_order": 1.740,
         "depends_on": ["vision-transformer", "gpt"],
         "summary": "Unified models bridging text, image, audio and video with shared representations.",
-    }
-},
+    },
 # FRONTIER
-{ "book two":
     {
         "id": "emergent-tech",
         "title": "Emergent Technology in AI",
@@ -288,8 +286,8 @@ TOPICS = [
         "sidebar_order": 2.0,
         "depends_on": [],
         "summary": "",
-    }
-}]
+    },
+]
 
 # Build a fast lookup by id
 TOPICS_BY_ID = {t["id"]: t for t in TOPICS}
