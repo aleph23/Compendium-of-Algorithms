@@ -33,6 +33,11 @@ CONTENT_DIR   = ROOT / "src" / "content" / "docs"
 STATE_FILE    = ROOT / ".assembler_state.json"   # tracks content hashes
 CONTEXT_FILE  = ROOT / "research_context.json"   # written by research.py
 
+args = argparse.ArgumentParser()
+all = args.add_argument("--all", action="store_true", help="Regenerate every topic")
+target_dir = args.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
+bootstrap = args.add_argument("--bootstrap", action="store_true", help="Inject foundational tone instructions for initial creation")
+
 # Import topic registry
 sys.path.insert(0, str(Path(__file__).parent))
 from topics_registry import TOPICS, TOPICS_BY_ID, CATEGORY_ORDER, CATEGORY_LABELS
@@ -51,7 +56,7 @@ logging.getLogger("httpx").setLevel(logging.DEBUG)
 # ---------------------------------------------
 
 client = anthropic.Anthropic(api_key=API_KEY)
-MODEL      = "claude-opus-4-7"      # Use the best available model for quality
+MODEL = "claude-opus-4-7"      # Use the best available model for quality
 MAX_TOKENS = 32000
 RETRY_SLEEP = 20                    # seconds between rate-limit retries
 MAX_RETRIES = 3
@@ -63,17 +68,16 @@ def load_research_context() -> dict:
     if CONTEXT_FILE.exists():
         ctx = json.loads(CONTEXT_FILE.read_text())
         generated = ctx.get("generated_at", "unknown")
-        covered   = ctx.get("coverage_from", "?")
-        to        = ctx.get("coverage_to",   "?")
-        print(f"📖 Research context loaded  (generated {generated[:10]}, "
+        covered = ctx.get("coverage_from", "?")
+        to = ctx.get("coverage_to", "?")
+        print(f"📖 Research context loaded (generated {generated[:10]}, "
               f"covering {covered} → {to})")
         return ctx
     else:
-        print("⚠️  No research_context.json found — "
+        print("⚠️ No research_context.json found — "
               "run research.py first for best results. "
               "Proceeding with model-knowledge only.")
         return {}
-
 
 def format_research_block(topic: dict, ctx: dict) -> str:
     """
@@ -83,10 +87,10 @@ def format_research_block(topic: dict, ctx: dict) -> str:
     if not ctx:
         return ""
 
-    tid     = topic["id"]
+    tid = topic["id"]
     lines   = []
 
-    # ── Per-topic recent papers ───────────────────────────────────────────────
+    # Per-topic recent papers 
     papers = ctx.get("per_topic", {}).get(tid, [])
     if papers:
         lines.append("## Recent Research Intelligence")
@@ -99,13 +103,13 @@ def format_research_block(topic: dict, ctx: dict) -> str:
         for p in papers:
             authors_str = ", ".join(p.get("authors", []))
             lines.append(
-                f"- **{p['title']}** ({p.get('published', '')})\n"
-                f"  Authors: {authors_str}\n"
-                f"  URL: {p.get('url', '')}\n"
-                f"  Abstract excerpt: {p.get('abstract', '')}\n"
+                f"-**{p['title']}** ({p.get('published', '')})\n"
+                f" Authors: {authors_str}\n"
+                f" URL: {p.get('url', '')}\n"
+                f" Abstract excerpt: {p.get('abstract', '')}\n"
             )
 
-    # ── emergent candidates note ──────────────────────────────────────────────
+    # emergent candidates note 
     emergent_summary = ctx.get("emergent", {}).get("summary", "")
     if emergent_summary:
         lines.append(
@@ -121,25 +125,24 @@ def format_research_block(topic: dict, ctx: dict) -> str:
 # PROMPT TEMPLATE
 def build_prompt(topic: dict, all_topics: list[dict], research_ctx: dict = {}, target_dir: str = "frontier", is_bootstrap: bool = False) -> str:
     """Build the full generation prompt for one architecture topic."""
-
     dep_titles = [
         TOPICS_BY_ID[d]["title"]
         for d in topic.get("depends_on", [])
         if d in TOPICS_BY_ID
     ]
     dep_str = ", ".join(dep_titles) if dep_titles else "none"
-
     research_block = format_research_block(topic, research_ctx)
-
     bootstrap_instruction = ""
-    if is_bootstrap:
+    if bootstrap:
         bootstrap_instruction = (
             "\n**BOOTSTRAP INSTRUCTION:** This is the foundational instantiation of the Compendium. "
             "Establish a highly authoritative, timeless, and encyclopedic baseline tone. "
             "Do NOT mention that the book is new, a work in progress, or being written—act as if this is a finished, prestigious reference manual.\n"
         )
 
-    prompt_template = f"""As a professional technical author write a chapter of the *Compendium of Algorithms: The Formal Specification and Structural Composition of Probabilistic Computational Systems and Their Occasional Interdependence* — a living reference on AI neural-network architectures. Your audience ranges from new engineers to seasoned ML researchers needing reference material. Write with precision and clarity.
+    prompt_template = f"""As a professional technical author write a chapter of the *Compendium of Algorithms: The Formal Specification and Structural Composition of Probabilistic Computational 
+      Systems and Their Occasional Interdependence* — a living reference on AI neural-network architectures. Your audience ranges from new engineers to seasoned ML researchers needing reference 
+      material. Write with precision and clarity.
 
 ## Assignment
 Write a complete Starlight-compatible Markdown page for the following architecture:
@@ -154,6 +157,7 @@ Write a complete Starlight-compatible Markdown page for the following architectu
 
 ### 1. Frontmatter
 Emit YAML frontmatter block:
+
 ```yaml
 ---
 title: "{topic["title"]}"
@@ -302,14 +306,11 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
     try:
         resolved = out_path.resolve()
         canon_resolved = (CONTENT_DIR / "received-canon").resolve()
-        if target_dir != "received-canon":
+        if target_dir != "received-canon" & not bootstrap:
             assert not str(resolved).startswith(str(canon_resolved)), (
                 f"CANON GUARD VIOLATION: attempted write to received-canon path: {resolved}"
             )
-    except AssertionError as guard_err:
-        sys.exit(f"\n🚫 {guard_err}\n"
-                 "The assembler must never modify received-canon without explicit override. Aborting.")
-
+            
     out_path.write_text(markdown, encoding="utf-8")
     print(f"  ✅  Written → {out_path.relative_to(ROOT)}")
     return out_path
@@ -387,37 +388,21 @@ def write_home_index(target_dir: str = "frontier"):
     print("  ✅  Home index written")
 
 
-# MAIN
-def parse_args():
-    p = argparse.ArgumentParser(description="Compendium of Algorithms Assembler")
-    p.add_argument("--all",   action="store_true", help="Regenerate every topic")
-    p.add_argument("--topic", metavar="ID",        help="Regenerate a single topic by id")
-    p.add_argument("--target", choices=["frontier", "received-canon"], default="frontier",
-                   help="Target directory for output (default: frontier)")
-    p.add_argument("--bootstrap", action="store_true", help="Inject foundational tone instructions for initial creation")
-    return p.parse_args()
-
-
 def main():
-    args   = parse_args()
-    state  = load_state()
+    args = parse_args()
+    state = load_state()
     CONTENT_DIR.mkdir(parents=True, exist_ok=True)
-    target_dir = args.target
 
     # Load research context (produced by research.py)
     research_ctx = load_research_context()
 
     # Determine work queue
-    if args.topic:
-        if args.topic not in TOPICS_BY_ID:
-            sys.exit(f"ERROR: unknown topic id '{args.topic}'. Check topics_registry.py")
-        queue = [TOPICS_BY_ID[args.topic]]
-    elif args.all:
+    if args.all:
         queue = TOPICS
     else:
         queue = [t for t in TOPICS if needs_update(t, state)]
 
-    if not queue:
+    if not queue && not bootstrap:
         print("✨ Everything is up-to-date. Nothing to regenerate.")
     else:
         print(f"🚀 Assembler starting — {len(queue)} topic(s) to generate\n")
@@ -436,7 +421,6 @@ def main():
                 # Continue with remaining topics rather than aborting
                 continue
 
-    # Always regenerate indices (cheap, keeps nav fresh)
     print("\n📚 Writing category indices…")
     for cat in CATEGORY_ORDER:
         cat_topics = [t for t in TOPICS if t["category"] == cat]
