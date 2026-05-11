@@ -26,7 +26,9 @@ export default defineConfig({
       ],
       components: { Head: "./src/components/CompendiumHead.astro", }
         social: { github: "https://github.com/aleph23/compendium-of-algorithms", },
-      sidebar: [ { label: "Liber Primus: Received Canon",
+      sidebar: [ 
+        { 
+          label: "Liber Primus: Received Canon",
           items: [
             { label: "Introduction", link: "/received-canon/" },
             { label: "Foundational", autogenerate: { directory: "/received-canon/foundational" } },
