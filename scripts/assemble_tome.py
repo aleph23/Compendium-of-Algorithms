@@ -33,9 +33,8 @@ CONTENT_DIR = ROOT / "src" / "content" / "docs"
 STATE_FILE = ROOT / ".assembler_state.json"   # tracks content hashes
 CONTEXT_FILE = ROOT / "research_context.json"   # written by research.py
 
-parse = argparse.ArgumentParser()
-target_dir = parser.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
-args = parse.parse_args()
+arg = argparse.ArgumentParser()
+target_dir = arg.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output.  Cooresponds to first (Established) or second (Emergent) book.  (default: frontier)")
 
 # Import topic registry
 sys.path.insert(0, str(Path(__file__).parent))
@@ -151,7 +150,7 @@ def format_research_block(topic: dict, ctx: dict) -> str:
         return ""
 
     tid = topic["id"]
-    lines   = []
+    lines = []
 
     # Per-topic recent papers
     papers = ctx.get("per_topic", {}).get(tid, [])
