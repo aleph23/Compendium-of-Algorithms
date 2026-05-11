@@ -503,7 +503,7 @@ def main():
         print(f"🚀 Assembler starting — {len(queue)} topic(s) to generate\n")
         for topic in queue:
             try:
-                write_topic_page(topic, research_ctx, args.target, bootstrap_mode)
+                write_topic_page(topic, research_ctx, target_dir, bootstrap_mode)
                 state[topic["id"]] = {
                     "hash": topic_hash(topic),
                     "generated": datetime.now(timezone.utc).isoformat(),
@@ -519,8 +519,8 @@ def main():
     print("\n📚 Writing category indices…")
     for cat in CATEGORY_ORDER:
         if cat_topics := [t for t in TOPICS if t["category"] == cat]:
-            write_category_index(cat, cat_topics, args.target)
-    write_home_index(args.target)
+            write_category_index(cat, cat_topics, target_dir)
+    write_home_index(target_dir)
 
     print(f"\n🎉 Done — {len(queue)} page(s) generated, indices updated.")
 
