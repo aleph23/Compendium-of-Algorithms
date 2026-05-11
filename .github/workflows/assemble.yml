@@ -5,14 +5,14 @@ on:
    # - cron: "0 4 1,15 * *"
   workflow_dispatch:
     inputs:
-      mode:
-        description: "Generation mode"
+      target:
+        description: "Target directory (frontier or received-canon)"
         required: false
-        default: "incremental"
+        default: "frontier"
         type: choice
         options:
-          - "incremental"
-          - "all"
+          - "frontier"
+          - "received-canon"
       skip_research:
         description: "Skip research phase (use cached context)"
         required: false
@@ -94,17 +94,14 @@ jobs:
           PYEOF
 
       # PHASE 2: Assembly
-      # Writes only to src/content/docs/frontier/ (canon guard enforced).
+      # Writes to src/content/docs/frontier/ or received-canon/ (canon guard enforced).
       - name: Run AI Assembler
         env:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
         run: |
-          MODE="${{ github.event.inputs.mode || 'incremental' }}"
-          if [ "$MODE" = "all" ]; then
-            python scripts/assemble_tome.py --all --bootstrap --target received-canon
-          else
-            python scripts/assemble_tome.py
-          fi
+          # The script automatically detects bootstrap vs incremental mode
+          TARGET="${{ github.event.inputs.target || 'frontier' }}"
+          python scripts/assemble_tome.py --target "$TARGET"
 
       # PHASE 3: Version management
       # Computes character-count delta against baseline.

@@ -28,14 +28,14 @@ from pathlib import Path
 import anthropic
 
 # Paths
-ROOT          = Path(__file__).parent.parent
-CONTENT_DIR   = ROOT / "src" / "content" / "docs"
-STATE_FILE    = ROOT / ".assembler_state.json"   # tracks content hashes
-CONTEXT_FILE  = ROOT / "research_context.json"   # written by research.py
+ROOT = Path(__file__).parent.parent
+CONTENT_DIR = ROOT / "src" / "content" / "docs"
+STATE_FILE = ROOT / ".assembler_state.json"   # tracks content hashes
+CONTEXT_FILE = ROOT / "research_context.json"   # written by research.py
 
-args = argparse.ArgumentParser()
-target_dir = args.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
-bootstrap = args.add_argument("--bootstrap", action="store_true", help="Inject foundational tone instructions for initial creation")
+parse = argparse.ArgumentParser()
+target_dir = parser.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
+args = parse.parse_args()
 
 # Import topic registry
 sys.path.insert(0, str(Path(__file__).parent))
@@ -45,6 +45,70 @@ from topics_registry import TOPICS, TOPICS_BY_ID, CATEGORY_ORDER, CATEGORY_LABEL
 API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
 if not API_KEY:
     sys.exit("ERROR: LLM_API_KEY environment variable not set.")
+
+# Completion Criteria (Minimum definition of 'has_content')
+COMPLETION_CRITERIA = {
+    "CompletedSection": {
+        "WrittenIntro": "Minimum 5 Paragraphs explanation",
+        "VisualRepresentation": "Minimum 3 Distinct Image/Mermaid Chart",
+        "PertinentEquations": {
+            "CompleteKatexRep": 1,
+            "ThoroughSymbolLegend": 1,
+            "PlainEnglishExpression": 1
+        },
+        "Relations_Historicity": "3 Paragraphs",
+        "DocumentationLinks": 8,
+        "InScopeCodeExamples": 3,
+        "Statement2Citation": "1-to-1 Minimum"
+    }
+}
+
+def is_page_complete(content: str) -> bool:
+    """Check if a generated page meets the minimum completion criteria."""
+    # 1. WrittenIntro: 5 paragraphs in Overview (roughly)
+    overview_match = re.search(r"### 2\. Overview\n(.*?)\n###", content, re.DOTALL)
+    if overview_match:
+        intro_text = overview_match.group(1).strip()
+        paragraphs = [p for p in intro_text.split("\n\n") if len(p.strip()) > 50]
+        if len(paragraphs) < 5:
+            return False
+    else:
+        return False
+
+    # 2. VisualRepresentation: 3 Mermaid charts
+    mermaid_blocks = re.findall(r"```mermaid", content)
+    if len(mermaid_blocks) < 3:
+        return False
+
+    # 3. PertinentEquations: Katex, Legend, Plain English
+    # Check for at least one equation block with a table (legend) and a following paragraph
+    equation_blocks = re.findall(r"\$\$.*?\$\$.*?\|.*?\|.*?\n\n", content, re.DOTALL)
+    if not equation_blocks:
+        return False
+
+    # 4. Relations & Historicity: 3 Paragraphs
+    historicity_match = re.search(r"### 12\. Relations & Historicity\n(.*?)\n###", content, re.DOTALL)
+    if historicity_match:
+        hist_text = historicity_match.group(1).strip()
+        paragraphs = [p for p in hist_text.split("\n\n") if len(p.strip()) > 50]
+        if len(paragraphs) < 3:
+            return False
+    else:
+        return False
+
+    # 5. DocumentationLinks: 8
+    links = re.findall(r"\[.*?\]\(http.*?\)", content)
+    if len(links) < 8:
+        return False
+
+    # 6. InScopeCodeExamples: 3
+    code_blocks = re.findall(r"```[a-z]+\n", content)
+    # Subtract mermaid blocks
+    non_mermaid_code = len(code_blocks) - len(mermaid_blocks)
+    if non_mermaid_code < 3:
+        return False
+
+    return True
 
 # --- DEBUGGING: API Exchange and Key Check ---
 print(f"[DEBUG] Loaded API Key: '{API_KEY[:8]}...{API_KEY[-4:]}' (Length: {len(API_KEY)})")
@@ -95,7 +159,8 @@ def format_research_block(topic: dict, ctx: dict) -> str:
         lines.extend(
             (
                 "## Recent Research Intelligence",
-                f"The following papers were published in the last {ctx.get('coverage_days', 14)} days and are likely relevant to this topic. Cite them by URL where appropriate, and integrate any novel findings or corrections into the page content.\n",
+                f"The following papers were published in the last {ctx.get('coverage_days', 14)} days and are likely relevant to this topic. Cite them by URL where appropriate, 
+                and integrate any novel findings or corrections into the page content.\n",
             )
         )
         for p in papers:
@@ -140,6 +205,16 @@ def build_prompt(topic: dict, all_topics: list[dict], research_ctx: dict = {}, t
       Systems and Their Occasional Interdependence* — a living reference on AI neural-network architectures. Your audience ranges from new engineers to seasoned ML researchers needing reference
       material. Write with precision and clarity.
 
+## Completion Criteria (HARD REQUIREMENTS)
+You MUST satisfy the following criteria in your response:
+- **Written Intro**: Minimum 5 Paragraphs of detailed explanation.
+- **Visual Representation**: Minimum 3 Distinct and detailed Mermaid Charts (Flowcharts, Sequence, State, etc.).
+- **Pertinent Equations**: Every key equation MUST have: 1) A KaTeX representation ($$ ... $$), 2) A thorough Symbol Legend table, and 3) A cohesive plain-English expression paragraph.
+- **Relations & Historicity**: Minimum 3 Paragraphs explaining lineage, related architectures, and historical significance.
+- **Documentation Links**: Minimum 8 high-quality outgoing links to papers, documentation, or repositories.
+- **In-Scope Code Examples**: Minimum 3 distinct code snippets showing implementation or usage.
+- **Statement to Citation**: Aim for a 1-to-1 ratio of technical claims to cited sources/links where possible.
+
 ## Assignment
 Write a complete Starlight-compatible Markdown page for the following architecture:
 
@@ -175,48 +250,55 @@ Use `graph TD` orientation.  Label each node with its widely recognized name.
 Wrap in a fenced code block: ```mermaid ... ```
 
 ### 4. Operational Flow  (Mermaid sequence or state diagram)
-Emit a **Mermaid sequenceDiagram or stateDiagram-v2** tracing one full pass through the architecture step by step.  Multiple diagrams are allowed if needed for clarity.
+Emit a **Mermaid sequenceDiagram or stateDiagram-v2** tracing one full pass through the architecture step by step. 
 
-### 5. Layer Breakdown
+### 5. Detailed Component Interaction (Mermaid diagram)
+Emit a third **Mermaid diagram** (e.g., classDiagram, stateDiagram, or another flowchart) focusing on a specific complex sub-component or data-transformation logic.
+
+### 6. Layer Breakdown
 For each distinct layer-type in this architecture, create a sub-section `#### LayerName` containing:
 - **Purpose**: one sentence
 - **Inputs / Outputs**: shape notation (e.g., `(B, T, d_model)`)
 - **Learnable parameters**: list with shapes
 - **Key hyperparameters**: list
-- **Effective methods**: list with `code` examples
+- **Effective methods**: list with `code` examples (this counts toward your code example quota)
 
-### 6. Core Equations
+### 7. Core Equations
 For EACH key equation:
-1. Display the equation in LaTeX inside a `$$...$$` block.
+1. Display the equation in LaTeX inside a `$$ ... $$` block.
 2. Immediately follow with a **Symbol Key** table:
 
 | Symbol | Plain-English meaning |
 |--------|-----------------------|
 | symbol | meaning |
 
-3. Then write a **Plain-English Paragraph** — one cohesive paragraph that describes exactly what the equation computes, with every symbol's name in parentheses after the corresponding English word.  Example style: "The output (y-hat) is computed by multiplying the input vector (x) by the weight matrix (W) and adding the bias (b)..."
+3. Then write a **Plain-English Paragraph** — one cohesive paragraph that describes exactly what the equation computes, with every symbol's name in parentheses after the 
+corresponding English word. Example style: "The output (y-hat) is computed by multiplying the input vector (x) by the weight matrix (W) and adding the bias (b)..."
 
-### 7. Complexity Analysis
+### 8. Complexity Analysis
 Table with rows: Time Complexity, Space Complexity, Typical Parameter Count, Typical FLOP Count (per forward pass).
 
-### 8. Strengths & Limitations
+### 9. Strengths & Limitations
 Two bullet lists.
 
-### 9. Key Milestones
+### 10. Key Milestones
 Timeline of important papers or model releases related to this architecture (3–7 items) with links.
 Format: `- **YYYY** — ![link](*Paper title*) — one-line impact`
 
-### 10. Reference Material
+### 11. Reference Material
 Off-site reference material, implementation documentation, code examples/snippets.
 
-### 11. See Also
+### 12. Relations & Historicity
+Minimum 3 paragraphs on the evolution of this architecture, its predecessors, its descendants, and its place in the broader AI history.
+
+### 13. See Also
 Cross-links to related topics in this book. Use Starlight relative links:
 `Topic Title`
 
 ## Style Rules
 - Err of the side of too much information
-- Always embed documentation links as much and as often as possible.
-- All new research must be appropriately sited and linked.
+- Always embed documentation links as much and as often as possible (Minimum 8).
+- All new research must be appropriately cited and linked.
 - Use `:::note`, `:::tip`, `:::caution` admonitions sparingly for genuinely important callouts.
 - All math MUST be valid KaTeX (used by Starlight).
 - All Mermaid MUST be valid Mermaid v10+ syntax. Avoid parentheses in node labels; use square brackets.
@@ -227,7 +309,7 @@ Cross-links to related topics in this book. Use Starlight relative links:
 
 {research_block}
 """
-    return prompt_template.replace("{target_dir}", target_dir)
+    return prompt_template.replace("{}", target_dir)
 
 # STATE MANAGEMENT
 def load_state() -> dict:
@@ -274,7 +356,7 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
     """Generate and write a Markdown page for one topic. Returns the output path."""
     print(f"  📝 Generating: {topic['title']}")
 
-    prompt   = build_prompt(topic, TOPICS, research_ctx, target_dir, bootstrap)
+    prompt = build_prompt(topic, TOPICS, research_ctx, target_dir, bootstrap)
     markdown = call_llm(prompt)
 
     # Strip any accidental leading/trailing whitespace or code fences
@@ -283,7 +365,6 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
         markdown = re.sub(r"^```[a-z]*\n?", "", markdown)
         markdown = re.sub(r"\n?```$", "", markdown)
 
-    # CANON GUARD — hard tripwire
     # The assembler usually ONLY writes inside frontier/.
     # Any path resolving into received-canon/ requires the explicit target.
     # Use cmd argument '--target received-canon' for updating the primary book.
@@ -297,8 +378,10 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
 
     # Paranoid resolution check — catches symlink tricks too
     resolved = out_path.resolve()
-    canon_resolved = (CONTENT_DIR / "received-canon").resolve()
-    if target_dir != "received-canon" & bootstrap is False:
+    # We only enforce the guard if the target is NOT received-canon.
+    # If the target IS received-canon, we obviously intend to write there.
+    if target_dir != "received-canon":
+        canon_resolved = (CONTENT_DIR / "received-canon").resolve()
         assert not str(resolved).startswith(str(canon_resolved)), (
             f"CANON GUARD VIOLATION: attempted write to received-canon path: {resolved}"
         )
@@ -310,7 +393,6 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
 
 # INDEX GENERATION
 def write_category_index(category: str, topics_in_cat: list[dict], target_dir: str = "frontier"):
-    # sourcery skip: for-append-to-extend
     """Write a category landing page listing all topics."""
     label = CATEGORY_LABELS.get(category, category.title())
     target_label = target_dir.replace("-", " ").title()
@@ -337,7 +419,6 @@ def write_category_index(category: str, topics_in_cat: list[dict], target_dir: s
 
 
 def write_home_index(target_dir: str = "frontier"):
-    # sourcery skip: for-append-to-extend
     """Write the root index page."""
     lines = [
         "---",
@@ -349,7 +430,7 @@ def write_home_index(target_dir: str = "frontier"):
         '  tagline: "Every major neural-network architecture — used, excused, and imaged — from  perceptron to tomorrow."',
         "  actions:",
         '    - text: "Start Reading →"',
-        '      link: /foundational/perceptron/',
+        '      link: /foundational/monte-carlo/',
         '      variant: primary',
         "---",
         "",
@@ -389,16 +470,40 @@ def main():
     # Load research context (produced by research.py)
     research_ctx = load_research_context()
 
-    # Determine work queue
-    queue = [t for t in TOPICS if needs_update(t, state)]
+    # Determine if we are in bootstrap mode (repo not populated)
+    # We check if the state is empty or if the target directory has no architecture pages
+    target_path = CONTENT_DIR / target_dir
+    existing_pages = list(target_path.rglob("*.md"))
+    # Filter out index.md files and check if actual content meets minimum criteria
+    architecture_pages = [p for p in existing_pages if p.name != "index.md"]
+    
+    # has_content is True ONLY if there are architecture pages AND they are all complete
+    has_content = len(architecture_pages) > 0 and all(is_page_complete(p.read_text()) for p in architecture_pages)
+    
+    bootstrap_mode = not state or not has_content
 
-    if not queue & bootstrap is False:
+    if bootstrap_mode:
+        print("🐣 Bootstrap mode detected — queueing all topics for initial construction")
+        queue = TOPICS
+    else:
+        # Incremental mode: topics changed in registry OR topics with new research findings
+        queue = []
+        research_topics = research_ctx.get("per_topic", {})
+        
+        for t in TOPICS:
+            if needs_update(t, state):
+                queue.append(t)
+            elif t["id"] in research_topics and research_topics[t["id"]]:
+                print(f"  🔍 New research found for {t['title']}, adding to queue")
+                queue.append(t)
+
+    if not queue:
         print("✨ Everything is up-to-date. Nothing to regenerate.")
     else:
         print(f"🚀 Assembler starting — {len(queue)} topic(s) to generate\n")
         for topic in queue:
             try:
-                write_topic_page(topic, research_ctx, target_dir, args.bootstrap)
+                write_topic_page(topic, research_ctx, target_dir, bootstrap_mode)
                 state[topic["id"]] = {
                     "hash": topic_hash(topic),
                     "generated": datetime.now(timezone.utc).isoformat(),
