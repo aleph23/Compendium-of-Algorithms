@@ -28,14 +28,14 @@ from pathlib import Path
 import anthropic
 
 # Paths
-ROOT          = Path(__file__).parent.parent
-CONTENT_DIR   = ROOT / "src" / "content" / "docs"
-STATE_FILE    = ROOT / ".assembler_state.json"   # tracks content hashes
-CONTEXT_FILE  = ROOT / "research_context.json"   # written by research.py
+ROOT = Path(__file__).parent.parent
+CONTENT_DIR = ROOT / "src" / "content" / "docs"
+STATE_FILE = ROOT / ".assembler_state.json"   # tracks content hashes
+CONTEXT_FILE = ROOT / "research_context.json"   # written by research.py
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
-args = parser.parse_args()
+parse = argparse.ArgumentParser()
+target_dir = parser.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", help="Target directory for output (default: frontier)")
+args = parse.parse_args()
 
 # Import topic registry
 sys.path.insert(0, str(Path(__file__).parent))
@@ -159,7 +159,8 @@ def format_research_block(topic: dict, ctx: dict) -> str:
         lines.extend(
             (
                 "## Recent Research Intelligence",
-                f"The following papers were published in the last {ctx.get('coverage_days', 14)} days and are likely relevant to this topic. Cite them by URL where appropriate, and integrate any novel findings or corrections into the page content.\n",
+                f"The following papers were published in the last {ctx.get('coverage_days', 14)} days and are likely relevant to this topic. Cite them by URL where appropriate, 
+                and integrate any novel findings or corrections into the page content.\n",
             )
         )
         for p in papers:
@@ -271,7 +272,8 @@ For EACH key equation:
 |--------|-----------------------|
 | symbol | meaning |
 
-3. Then write a **Plain-English Paragraph** — one cohesive paragraph that describes exactly what the equation computes, with every symbol's name in parentheses after the corresponding English word. 
+3. Then write a **Plain-English Paragraph** — one cohesive paragraph that describes exactly what the equation computes, with every symbol's name in parentheses after the 
+corresponding English word. Example style: "The output (y-hat) is computed by multiplying the input vector (x) by the weight matrix (W) and adding the bias (b)..."
 
 ### 8. Complexity Analysis
 Table with rows: Time Complexity, Space Complexity, Typical Parameter Count, Typical FLOP Count (per forward pass).
@@ -307,7 +309,7 @@ Cross-links to related topics in this book. Use Starlight relative links:
 
 {research_block}
 """
-    return prompt_template.replace("{target_dir}", target_dir)
+    return prompt_template.replace("{}", target_dir)
 
 # STATE MANAGEMENT
 def load_state() -> dict:
@@ -354,7 +356,7 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
     """Generate and write a Markdown page for one topic. Returns the output path."""
     print(f"  📝 Generating: {topic['title']}")
 
-    prompt   = build_prompt(topic, TOPICS, research_ctx, target_dir, bootstrap)
+    prompt = build_prompt(topic, TOPICS, research_ctx, target_dir, bootstrap)
     markdown = call_llm(prompt)
 
     # Strip any accidental leading/trailing whitespace or code fences
@@ -363,7 +365,6 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
         markdown = re.sub(r"^```[a-z]*\n?", "", markdown)
         markdown = re.sub(r"\n?```$", "", markdown)
 
-    # CANON GUARD — hard tripwire
     # The assembler usually ONLY writes inside frontier/.
     # Any path resolving into received-canon/ requires the explicit target.
     # Use cmd argument '--target received-canon' for updating the primary book.
@@ -392,7 +393,6 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
 
 # INDEX GENERATION
 def write_category_index(category: str, topics_in_cat: list[dict], target_dir: str = "frontier"):
-    # sourcery skip: for-append-to-extend
     """Write a category landing page listing all topics."""
     label = CATEGORY_LABELS.get(category, category.title())
     target_label = target_dir.replace("-", " ").title()
@@ -419,7 +419,6 @@ def write_category_index(category: str, topics_in_cat: list[dict], target_dir: s
 
 
 def write_home_index(target_dir: str = "frontier"):
-    # sourcery skip: for-append-to-extend
     """Write the root index page."""
     lines = [
         "---",
@@ -431,7 +430,7 @@ def write_home_index(target_dir: str = "frontier"):
         '  tagline: "Every major neural-network architecture — used, excused, and imaged — from  perceptron to tomorrow."',
         "  actions:",
         '    - text: "Start Reading →"',
-        '      link: /foundational/perceptron/',
+        '      link: /foundational/monte-carlo/',
         '      variant: primary',
         "---",
         "",
@@ -473,7 +472,7 @@ def main():
 
     # Determine if we are in bootstrap mode (repo not populated)
     # We check if the state is empty or if the target directory has no architecture pages
-    target_path = CONTENT_DIR / args.target
+    target_path = CONTENT_DIR / target_dir
     existing_pages = list(target_path.rglob("*.md"))
     # Filter out index.md files and check if actual content meets minimum criteria
     architecture_pages = [p for p in existing_pages if p.name != "index.md"]
