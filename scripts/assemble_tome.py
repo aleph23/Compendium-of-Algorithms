@@ -466,6 +466,9 @@ def main():
     state = load_state()
     CONTENT_DIR.mkdir(parents=True, exist_ok=True)
 
+    with open(os.environ['GITHUB_ENV'], 'a') as f:
+        f.write(f"MY_TARGET={CONTENT_DIR}")    
+
     # Load research context (produced by research.py)
     research_ctx = load_research_context()
 
