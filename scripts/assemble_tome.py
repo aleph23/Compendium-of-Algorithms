@@ -159,8 +159,7 @@ def format_research_block(topic: dict, ctx: dict) -> str:
         lines.extend(
             (
                 "## Recent Research Intelligence",
-                f"The following papers were published in the last {ctx.get('coverage_days', 14)} days and are likely relevant to this topic. Cite them by URL where appropriate, 
-                and integrate any novel findings or corrections into the page content.\n",
+                f"The following papers were published in the last {ctx.get('coverage_days', 14)} days and are likely relevant to this topic. Cite them by URL where appropriate, and integrate any novel findings or corrections into the page content.\n",
             )
         )
         for p in papers:
