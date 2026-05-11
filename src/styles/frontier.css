@@ -6,7 +6,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Cinzel:wght@400;600&display=swap');
 
-/* ── Palette ──────────────────────────────────────────────── */
+/*  Palette  */
 :root {
   --frontier-bg:          #0a0e14;
   --frontier-bg-2:        #0f1520;
@@ -22,7 +22,7 @@
   --frontier-glow:        rgba(58, 143, 255, 0.15);
 }
 
-/* ── Base ─────────────────────────────────────────────────── */
+/*  Base  */
 body.book-frontier {
   background-color: var(--frontier-bg);
   color:            var(--frontier-text);
@@ -44,7 +44,7 @@ body.book-frontier::before {
   background-size: 32px 32px;
 }
 
-/* ── Starlight overrides ───────────────────────────────────── */
+/*  Starlight overrides  */
 body.book-frontier .sl-container,
 body.book-frontier [data-has-sidebar] {
   background: var(--frontier-bg);
@@ -58,7 +58,7 @@ body.book-frontier header.header {
   letter-spacing: 0.04em;
 }
 
-/* ── Sidebar ──────────────────────────────────────────────── */
+/*  Sidebar  */
 body.book-frontier nav.sidebar {
   background:   var(--frontier-bg-2);
   border-right: 1px solid var(--frontier-rule);
@@ -89,7 +89,7 @@ body.book-frontier .sidebar-content details summary {
   text-transform: uppercase;
 }
 
-/* ── Headings ─────────────────────────────────────────────── */
+/*  Headings  */
 body.book-frontier h1,
 body.book-frontier h2,
 body.book-frontier h3,
@@ -131,7 +131,7 @@ body.book-frontier h4 {
   text-transform: uppercase;
 }
 
-/* ── Links ────────────────────────────────────────────────── */
+/*  Links  */
 body.book-frontier a {
   color:           var(--frontier-accent);
   text-decoration: none;
@@ -142,14 +142,14 @@ body.book-frontier a:hover {
   text-underline-offset: 3px;
 }
 
-/* ── HR ───────────────────────────────────────────────────── */
+/*  HR  */
 body.book-frontier hr {
   border: none;
   border-top: 1px solid var(--frontier-rule);
   margin: 2.5rem 0;
 }
 
-/* ── Code ─────────────────────────────────────────────────── */
+/*  Code  */
 body.book-frontier code {
   background:    var(--frontier-code-bg);
   border:        1px solid var(--frontier-rule);
@@ -177,7 +177,7 @@ body.book-frontier pre code {
   color:      var(--frontier-text);
 }
 
-/* ── Blockquote ───────────────────────────────────────────── */
+/*  Blockquote  */
 body.book-frontier blockquote {
   border-left:  3px solid var(--frontier-accent);
   background:   var(--frontier-bg-3);
@@ -187,7 +187,7 @@ body.book-frontier blockquote {
   font-style:   italic;
 }
 
-/* ── Tables ───────────────────────────────────────────────── */
+/*  Tables  */
 body.book-frontier table {
   border-collapse: collapse;
   width:           100%;
@@ -215,7 +215,7 @@ body.book-frontier tr:nth-child(even) td {
   background: var(--frontier-bg-3);
 }
 
-/* ── Admonitions ──────────────────────────────────────────── */
+/*  Admonitions  */
 body.book-frontier .starlight-aside {
   background:   var(--frontier-bg-3);
   border-left:  3px solid var(--frontier-accent);
@@ -226,7 +226,7 @@ body.book-frontier .starlight-aside.starlight-aside--caution {
   border-left-color: var(--frontier-accent-warm);
 }
 
-/* ── Mermaid ──────────────────────────────────────────────── */
+/*  Mermaid  */
 body.book-frontier .mermaid {
   background:   var(--frontier-bg-2);
   border:       1px solid var(--frontier-rule);
@@ -234,7 +234,7 @@ body.book-frontier .mermaid {
   box-shadow:   0 0 24px var(--frontier-glow);
 }
 
-/* ── Math ─────────────────────────────────────────────────── */
+/*  Math  */
 body.book-frontier .math-display {
   background:   var(--frontier-code-bg);
   border:       1px solid var(--frontier-rule);
@@ -242,7 +242,7 @@ body.book-frontier .math-display {
   box-shadow:   0 0 12px var(--frontier-glow);
 }
 
-/* ── Version badge ────────────────────────────────────────── */
+/*  Version badge  */
 body.book-frontier .frontier-version-badge {
   font-family:    'DM Mono', monospace;
   font-size:      0.7rem;
