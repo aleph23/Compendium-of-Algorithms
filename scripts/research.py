@@ -47,7 +47,7 @@ from pathlib import Path
 import anthropic
 
 # Paths
-ROOT         = Path(__file__).parent.parent
+ROOT = Path(__file__).parent.parent
 CONTEXT_FILE = ROOT / "research_context.json"
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -59,7 +59,7 @@ if not API_KEY:
     sys.exit("ERROR: LLM_API_KEY environment variable not set.")
 
 client = anthropic.Anthropic(api_key=API_KEY)
-RESEARCH_MODEL = "claude-opus-4-7"   # web_search tool requires a capable model
+RESEARCH_MODEL = "claude-opus-4-7"   
 
 # arXiv category mapping
 # Maps our internal categories → arXiv search terms
@@ -80,26 +80,18 @@ ARXIV_WILDCARD_QUERIES = [
     "new deep learning architecture",
 ]
 
-ARXIV_MAX_RESULTS   = 12    # per query
-PAPERS_WITH_CODE_N  = 6    # top N tasks to fetch from PWC
-
+ARXIV_MAX_RESULTS = 12    # per query
+PAPERS_WITH_CODE_N = 6    # top N tasks to fetch from PWC
 
 # 1. ARXIV CRAWL
 ARXIV_BASE = "https://export.arxiv.org/api/query"
-ARXIV_NS   = "http://www.w3.org/2005/Atom"
+ARXIV_NS = "http://www.w3.org/2005/Atom"
 
-
-def parse_args():
-    p = ArgumentParser(description="Compendium of Algorithms — Research Agent")
-    p.add_argument("--days", type=int, default=18,
-                   help="Look-back window in days (default: 14 for biweekly cadence)")
-    p.add_argument("--skip-arxiv", action="store_true",
-                   help="Skip the arXiv crawl phase")
-    p.add_argument("--skip-pwc", action="store_true",
-                   help="Skip the Papers With Code phase")
-    p.add_argument("--skip-emergent", action="store_true",
-                   help="Skip the emergent-architecture scan (saves ~1 API call)")
-    return p.parse_args()
+parser = ArgumentParser(description="Compendium of Algorithms — Research Agent")
+parser.add_argument("--days", type=int, default=18, help="Look-back window in days (default: 14 for biweekly cadence)")
+parser.add_argument("--skip-arxiv", action="store_true", help="Skip the arXiv crawl phase")
+parser.add_argument("--skip-pwc", action="store_true", help="Skip the Papers With Code phase")
+args = parser.parse_args()
 
 def _arxiv_search(query: str, max_results: int = ARXIV_MAX_RESULTS,
                   days_back: int = 14) -> list[dict]:
@@ -131,9 +123,9 @@ def _arxiv_search(query: str, max_results: int = ARXIV_MAX_RESULTS,
             continue
 
         arxiv_id = entry.findtext(f"{{{ARXIV_NS}}}id", "").split("/abs/")[-1]
-        title    = re.sub(r"\s+", " ", entry.findtext(f"{{{ARXIV_NS}}}title", "")).strip()
+        title = re.sub(r"\s+", " ", entry.findtext(f"{{{ARXIV_NS}}}title", "")).strip()
         abstract = re.sub(r"\s+", " ", entry.findtext(f"{{{ARXIV_NS}}}summary", "")).strip()
-        authors  = [
+        authors = [
             a.findtext(f"{{{ARXIV_NS}}}name", "")
             for a in entry.findall(f"{{{ARXIV_NS}}}author")
         ][:6]  # cap at 6
@@ -144,7 +136,7 @@ def _arxiv_search(query: str, max_results: int = ARXIV_MAX_RESULTS,
             "authors": authors,
             "published": published[:10],
             "abstract": abstract[:600] + ("…" if len(abstract) > 600 else ""),
-            "url":       f"https://arxiv.org/abs/{arxiv_id}",
+            "url": f"https://arxiv.org/abs/{arxiv_id}",
         })
 
     return papers
@@ -162,7 +154,7 @@ def run_arxiv_crawl(days_back: int = 18) -> dict[str, list[dict]]:
     for cat, queries in all_queries:
         cat_papers: list[dict] = []
         for q in queries:
-            print(f"   searching [{cat}] → '{q}'")
+            print(f" searching [{cat}] → '{q}'")
             papers = _arxiv_search(q, days_back=days_back)
             cat_papers.extend(papers)
             time.sleep(2)   # arXiv rate-limit courtesy
@@ -176,22 +168,22 @@ def run_arxiv_crawl(days_back: int = 18) -> dict[str, list[dict]]:
                 unique.append(p)
 
         results[cat] = unique
-        print(f"   → {len(unique)} unique paper(s) for '{cat}'")
+        print(f" → {len(unique)} unique paper(s) for '{cat}'")
 
     # Wildcard pass
     wildcard: list[dict] = []
     for q in ARXIV_WILDCARD_QUERIES:
-        print(f"   wildcard search → '{q}'")
+        print(f" wildcard search → '{q}'")
         wildcard.extend(_arxiv_search(q, days_back=days_back))
         time.sleep(1)
     results["_wildcard"] = wildcard
-    print(f"   → {len(wildcard)} wildcard paper(s)")
+    print(f" → {len(wildcard)} wildcard paper(s)")
 
     return results
 
 
 # 2. PAPERS WITH CODE
-PWC_TASKS_URL  = "https://paperswithcode.com/api/v1/tasks/?format=json&page_size=50"
+PWC_TASKS_URL = "https://paperswithcode.com/api/v1/tasks/?format=json&page_size=50"
 PWC_PAPERS_URL = "https://paperswithcode.com/api/v1/papers/?format=json&ordering=-published&page_size=5"
 
 TASK_KEYWORDS = [
@@ -205,7 +197,7 @@ def _pwc_fetch(url: str) -> dict | None:
         with request.urlopen(req, timeout=15) as resp:
             return json.loads(resp.read())
     except Exception as exc:
-        print(f"    ⚠️  PWC fetch failed: {exc}")
+        print(f" ⚠️  PWC fetch failed: {exc}")
         return None
 
 
@@ -226,9 +218,8 @@ def run_pwc_crawl() -> list[dict]:
             "abstract": (item.get("abstract") or "")[:500],
         })
 
-    print(f"   → {len(papers)} paper(s) from Papers With Code")
+    print(f" → {len(papers)} paper(s) from Papers With Code")
     return papers
-
 
 # 3. emergent ARCHITECTURE SCAN (Agent + web_search)
 def run_emergent_scan(known_ids: list[str]) -> dict:
@@ -291,23 +282,23 @@ Search broadly before concluding. Be selective — only include architectures wi
 
         # Strip accidental markdown fences
         raw = re.sub(r"^```[a-z]*\n?", "", raw)
-        raw = re.sub(r"\n?```$",        "", raw)
+        raw = re.sub(r"\n?```$", "", raw)
 
         result = json.loads(raw)
         candidates = result.get("candidates", [])
-        summary    = result.get("summary", "")
+        summary = result.get("summary", "")
 
-        print(f"   → {len(candidates)} emergent candidate(s) identified")
+        print(f" → {len(candidates)} emergent candidate(s) identified")
         if summary:
-            print(f"   ℹ️  {summary[:200]}…" if len(summary) > 200 else f"   ℹ️  {summary}")
+            print(f" ℹ️ {summary[:200]}…" if len(summary) > 200 else f" ℹ️ {summary}")
 
         return {"summary": summary, "candidates": candidates}
 
     except json.JSONDecodeError as exc:
-        print(f"   ⚠️  Could not parse emergent-scan response as JSON: {exc}")
+        print(f" ⚠️ Could not parse emergent-scan response as JSON: {exc}")
         return {"summary": "Parse error — see logs.", "candidates": []}
     except Exception as exc:
-        print(f"   ⚠️  emergent scan failed: {exc}")
+        print(f" ⚠️ emergent scan failed: {exc}")
         return {"summary": str(exc), "candidates": []}
 
 
@@ -341,7 +332,6 @@ def build_per_topic_context(arxiv_results: dict[str, list[dict]]) -> dict[str, l
 
     return per_topic
 
-
 # 5. WRITE CONTEXT FILE
 def write_context(
     arxiv_results: dict[str, list[dict]],
@@ -370,19 +360,18 @@ def write_context(
     candidates = emergent.get("candidates", [])
     if candidates:
         print("\n" + "═" * 70)
-        print("🆕  emergent ARCHITECTURE CANDIDATES")
-        print("    Review, then copy-paste into scripts/topics_registry.py")
+        print("🆕 emergent ARCHITECTURE CANDIDATES")
+        print("Review, then copy-paste into scripts/topics_registry.py")
         print("═" * 70)
         for c in candidates:
             urls = c.pop("source_urls", [])
-            print(f"\n    # Sources: {', '.join(urls)}")
+            print(f"\n# Sources: {', '.join(urls)}")
             print(f" {json.dumps(c, indent=4)},")
         print("═" * 70 + "\n`")
 
 
 # MAIN
 def main():
-    args = parse_args()
     print(f"🔬 Research agent starting — {args.days}-day look-back window\n")
 
     # Phase 1: arXiv
@@ -390,32 +379,28 @@ def main():
     if not args.skip_arxiv:
         arxiv_results = run_arxiv_crawl(days_back=args.days)
     else:
-        print("⏭️  Skipping arXiv crawl")
+        print("⏭️ Skipping arXiv crawl")
 
     # Phase 2: Papers With Code
     pwc_results: list[dict] = []
     if not args.skip_pwc:
         pwc_results = run_pwc_crawl()
     else:
-        print("⏭️  Skipping Papers With Code")
+        print("⏭️ Skipping Papers With Code")
 
     # Phase 3: emergent scan
     emergent: dict = {"summary": "", "candidates": []}
-    if not args.skip_emergent:
-        known_ids = [t["id"] for t in TOPICS]
-        emergent  = run_emergent_scan(known_ids)
-    else:
-        print("⏭️  Skipping emergent-architecture scan")
+    known_ids = [t["id"] for t in TOPICS]
+    emergent = run_emergent_scan(known_ids)
 
     # Phase 4: Per-topic context mapping
-    print("\n🗺️  Phase 4: Mapping papers to topics")
+    print("\n🗺️ Phase 4: Mapping papers to topics")
     per_topic = build_per_topic_context(arxiv_results)
     covered = sum(1 for v in per_topic.values() if v)
-    print(f"   → {covered}/{len(TOPICS)} topics have at least one recent paper")
+    print(f" → {covered}/{len(TOPICS)} topics have at least one recent paper")
 
     # Phase 5: Write output
     write_context(arxiv_results, pwc_results, emergent, per_topic, args.days)
-
 
 if __name__ == "__main__":
     main()
