@@ -235,6 +235,14 @@ jobs:
           git push origin compendium --force
 
       # PHASE 7: Upload artifacts & deploy to GitHub Pages:
+      - name: Deploy Compiled Docs
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: compendium         # Branch B (The finished product)
+          publish_dir: ./dist                # From Branch A (The skeleton build)
+          destination_dir: ${{ env.MY_TARGET }} # Nested path on B
+      
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
 
