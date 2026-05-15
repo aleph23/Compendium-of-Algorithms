@@ -8,8 +8,8 @@ Version file: frontier_version.json
   {
     "major": 1,
     "minor": 0,
-    "char_count_baseline": 0,      # baseline for next minor-bump check
-    "char_count_last_major": 0,    # baseline for major-bump accumulation
+    "char_count_baseline": 0, # baseline for next minor-bump check
+    "char_count_last_major": 0, # baseline for major-bump accumulation
     "last_updated": "ISO datetime",
     "history": [
       {"version": "1.0", "date": "...", "chars": 0, "event": "init"}
@@ -18,8 +18,8 @@ Version file: frontier_version.json
 
 Exit codes
 ----------
-  0  — normal (no archive needed)
-  2  — archive triggered (caller should create GitHub Release)
+  0 — normal (no archive needed)
+  2 — archive triggered (caller should create GitHub Release)
 """
 
 import json
@@ -37,14 +37,14 @@ MAJOR_THRESHOLD = 0.75   # 75% cumulative change triggers major bump
 ARCHIVE_TRIGGERED = False   # set to True if this run needs a release
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# Helpers
 
 def count_chars() -> int:
     """Total character count of all .md files under frontier/."""
-    total = 0
-    for md in FRONTIER_DIR.rglob("*.md"):
-        total += len(md.read_text(encoding="utf-8", errors="replace"))
-    return total
+    return sum(
+        len(md.read_text(encoding="utf-8", errors="replace"))
+        for md in FRONTIER_DIR.rglob("*.md")
+    )
 
 
 def load_version() -> dict:
@@ -84,7 +84,7 @@ def run():
     current = count_chars()
     v = load_version()
 
-    print(f"\n📊 Frontier Version Manager")
+    print("\n📊 Frontier Version Manager")
     print(f"Current version: {version_str(v)}")
     print(f"Current chars: {current:,}")
     print(f"Baseline chars: {v['char_count_baseline']:,}")
@@ -102,11 +102,7 @@ def run():
     baseline = v["char_count_baseline"]
     last_major = v["char_count_last_major"]
 
-    if baseline == 0:
-        delta_pct = 0.0
-    else:
-        delta_pct = (current - baseline) / baseline   # signed: negative = reduction
-
+    delta_pct = 0.0 if baseline == 0 else (current - baseline) / baseline
     if last_major == 0:
         cumulative_pct = 0.0
     else:

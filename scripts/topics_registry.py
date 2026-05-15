@@ -1,8 +1,8 @@
 """
 topics_registry.py
 ------------------
-Canonical list of AI architecture topics for the book assembler.
-Each topic has: id, title, era, category, and dependencies (for ordering).
+Canonical list of AI architectures for the book assembler.
+Each architecture has: id, title, era, category, and dependencies (for ordering).
 Add new topics here — the assembler will pick them up on the next run.
 """
 
@@ -275,7 +275,7 @@ TOPICS = [
         "category": "modern",
         "sidebar_order": 1.740,
         "depends_on": ["vision-transformer", "gpt"],
-        "summary": "Unified models bridging text, image, audio and video with shared representations.",
+        "summary": "Unified models bridging text, image, audio, and video with shared representations.",
     },
 # FRONTIER
     {

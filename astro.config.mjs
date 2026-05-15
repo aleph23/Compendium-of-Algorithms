@@ -24,7 +24,7 @@ export default defineConfig({
         { tag: "link", attrs: { rel: "preconnect", href: "https://fonts.googleapis.com" } },
         { tag: "link", attrs: { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" } },
       ],
-      components: { Head: "./src/components/CompendiumHead.astro", }
+      components: { Head: "./src/components/CompendiumHead.astro", },
         social: { github: "https://github.com/aleph23/compendium-of-algorithms", },
       sidebar: [ 
         { 

@@ -137,13 +137,21 @@
     const canonLink = document.getElementById('title-canon');
     const frontierLink = document.getElementById('title-frontier');
 
-    if (isCanon && canonLink) canonLink.classList.add('active');
-    if (isFrontier && frontierLink) frontierLink.classList.add('active');
+    if (isCanon && canonLink) {
+      canonLink.classList.add('active');
+    }
+    if (isFrontier && frontierLink) {
+      frontierLink.classList.add('active');
+    }
 
-    // Apply body class so the right stylesheet is activated via CSS cascade.
+    // Apply body class, so the right stylesheet is activated via CSS cascade.
     // (Starlight renders one shared body; we toggle the class here.)
-    if (isCanon) document.body.classList.add('book-canon');
-    if (isFrontier) document.body.classList.add('book-frontier');
+    if (isCanon) {
+      document.body.classList.add('book-canon');
+    }
+    if (isFrontier) {
+      document.body.classList.add('book-frontier');
+    }
   })();
 </script>
 bn`

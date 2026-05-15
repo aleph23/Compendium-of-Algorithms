@@ -6,13 +6,13 @@ Uses an Anthropic-API-compatible API to generate/refresh Starlight-ready Markdow
 
 Run modes
 ---------
-  python assemble_tome.py            # incremental: only changed/new topics
-  python assemble_tome.py --all      # force-regenerate every topic
-  python assemble_tome.py --topic resnet  # regenerate one topic by id
+  python assemble_tome.py # incremental: only changed/new topics
+  python assemble_tome.py --all # force-regenerate every topic
+  python assemble_tome.py --topic resnet # regenerate one topic by id
 
 Environment
 -----------
-  LLM_API_KEY   Anthropic-API-compatible key (set in GitHub Actions secrets)
+  LLM_API_KEY = Anthropic-API-compatible key (set in GitHub Actions secrets)
 """
 
 import argparse
@@ -35,7 +35,8 @@ CONTEXT_FILE = ROOT / "research_context.json"   # written by research.py
 
 arg = argparse.ArgumentParser()
 target_dir = (p := arg.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", 
-                                    help="Target directory for output.  Cooresponds to first (Established) or second (Emergent) book.  (default: frontier)"))
+                                    help="Target directory for output.  Cooresponds to first (Established) or second (Emergent) book. (default: frontier)"))
+target_dir = str(target_dir)
 
 # Import topic registry
 sys.path.insert(0, str(Path(__file__).parent))
@@ -81,7 +82,7 @@ def is_page_complete(content: str) -> bool:
         return False
 
     # 3. PertinentEquations: Katex, Legend, Plain English
-    # Check for at least one equation block with a table (legend) and a following paragraph
+    # Check for at least one equation block with a table (legend), and a following paragraph
     equation_blocks = re.findall(r"\$\$.*?\$\$.*?\|.*?\|.*?\n\n", content, re.DOTALL)
     if not equation_blocks:
         return False
@@ -125,7 +126,7 @@ RETRY_SLEEP = 20                    # seconds between rate-limit retries
 MAX_RETRIES = 3
 
 
-# RESEARCH CONTEXT  (produced by research.py, consumed here)
+# RESEARCH CONTEXT (produced by research.py, consumed here)
 def load_research_context() -> dict:
     """Load research_context.json if present; return empty structure otherwise."""
     if CONTEXT_FILE.exists():
@@ -137,8 +138,7 @@ def load_research_context() -> dict:
               f"covering {covered} → {to})")
         return ctx
     else:
-        print("⚠️ No research_context.json found — "
-              "run research.py first for best results. "
+        print("⚠️ No research_context.json found—run research.py first for best results.\n"
               "Proceeding with model-knowledge only.")
         return {}
 
@@ -195,8 +195,8 @@ def build_prompt(topic: dict, all_topics: list[dict], research_ctx: dict = {}, t
     bootstrap_instruction = ""
     if bootstrap:
         bootstrap_instruction = (
-            "\n**BOOTSTRAP INSTRUCTION:** This is the foundational instantiation of the Compendium. "
-            "Establish a highly authoritative, timeless, and encyclopedic baseline tone. "
+            "\n**BOOTSTRAP INSTRUCTION:** This is the foundational instantiation of the Compendium.\n"
+            "Establish a highly authoritative, timeless, and encyclopedic baseline tone.\n"
             "Do NOT mention that the book is new, a work in progress, or being written—act as if this is a finished, prestigious reference manual.\n"
         )
 
@@ -426,7 +426,7 @@ def write_home_index(target_dir: str = "frontier"):
         "template: splash",
         "hero:",
         '  title: "Compendium of Algorithms"',
-        '  tagline: "Every major neural-network architecture — used, excused, and imaged — from  perceptron to tomorrow."',
+        '  tagline: "Every major neural-network architecture — used, excused, and imaged — from perceptron to tomorrow."',
         "  actions:",
         '    - text: "Start Reading →"',
         '      link: /foundational/monte-carlo/',
@@ -459,7 +459,7 @@ def write_home_index(target_dir: str = "frontier"):
         lines.append("")
 
     (CONTENT_DIR / "index.md").write_text("\n".join(lines), encoding="utf-8")
-    print("  ✅  Home index written")
+    print("  ✅ Home index written")
 
 
 def main():
@@ -479,7 +479,7 @@ def main():
     # Filter out index.md files and check if actual content meets minimum criteria
     architecture_pages = [p for p in existing_pages if p.name != "index.md"]
     
-    # has_content is True ONLY if there are architecture pages AND they are all complete
+    # has_content is True ONLY if there are architecture pages, AND they are all complete
     has_content = len(architecture_pages) > 0 and all(is_page_complete(p.read_text()) for p in architecture_pages)
     
     bootstrap_mode = not state or not has_content
@@ -500,7 +500,7 @@ def main():
                 queue.append(t)
 
     if not queue:
-        print("✨ Everything is up-to-date. Nothing to regenerate.")
+        print("✨ Everything is up to date. Nothing to regenerate.")
     else:
         print(f"🚀 Assembler starting — {len(queue)} topic(s) to generate\n")
         for topic in queue:

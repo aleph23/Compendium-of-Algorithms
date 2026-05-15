@@ -8,18 +8,18 @@
 
 /*  Palette  */
 :root {
-  --frontier-bg:          #0a0e14;
-  --frontier-bg-2:        #0f1520;
-  --frontier-bg-3:        #141d2e;
-  --frontier-surface:     #1a2440;
-  --frontier-text:        #c8d8f0;
-  --frontier-text-muted:  #6a8ab0;
-  --frontier-accent:      #3a8fff;
-  --frontier-accent-cold: #00d4ff;
-  --frontier-accent-warm: #ff6b35;   /* for warnings, deletions */
-  --frontier-rule:        #1e3050;
-  --frontier-code-bg:     #0d1520;
-  --frontier-glow:        rgba(58, 143, 255, 0.15);
+  --frontier-bg: #0a0e14;
+  --frontier-bg-2: #0f1520;
+  --frontier-bg-3: #141d2e;
+  --frontier-surface: #1a2440;
+  --frontier-text: #e6e6ff;
+  --frontier-text-muted: #6a8ab0;
+  --frontier-accent: #3a8fff;
+  --frontier-accent-cold: #00ffff;
+  --frontier-accent-warm: #ff6900;   /* for warnings, deletions */
+  --frontier-rule: #1e3050;
+  --frontier-code-bg: #0d1520;
+  --frontier-glow: rgba(58, 143, 255, 0.29);
 }
 
 /*  Base  */
@@ -28,7 +28,7 @@ body.book-frontier {
   color:            var(--frontier-text);
   font-family:      'Space Grotesk', 'Inter', system-ui, sans-serif;
   font-size:        0.97rem;
-  line-height:      1.65;
+  line-height:      1.5;
 }
 
 /* Subtle grid overlay — blueprint feel */
@@ -40,7 +40,7 @@ body.book-frontier::before {
   z-index:  0;
   background-image:
     linear-gradient(rgba(58, 143, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(58, 143, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(110deg, rgba(58, 143, 255, 0.03) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 

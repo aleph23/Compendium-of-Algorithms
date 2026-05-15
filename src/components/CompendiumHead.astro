@@ -32,12 +32,16 @@ import BookSwitcher from "./BookSwitcher.astro";
 <!-- Frontier version badge injected via JS for Frontier pages only -->
 <script is:inline>
   (function () {
-    if (window.location.pathname.indexOf('/frontier') === -1) return;
+    if (window.location.pathname.indexOf('/frontier') === -1) {
+      return;
+    }
     // Fetch frontier_version.json (served from site root in compendium branch)
     fetch('/frontier_version.json')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (v) {
-        if (!v) return;
+        if (!v) {
+          return;
+        }
         var badge = document.createElement('div');
         badge.className = 'frontier-version-badge';
         badge.textContent =
@@ -45,7 +49,9 @@ import BookSwitcher from "./BookSwitcher.astro";
           ' \u2014 ' + (v.last_updated || '').slice(0, 10);
         var article = document.querySelector('article') ||
                       document.querySelector('.sl-markdown-content');
-        if (article) article.appendChild(badge);
+        if (article) {
+          article.appendChild(badge);
+        }
       })
       .catch(function () { /* version file absent — silent */ });
   })();
