@@ -7,10 +7,10 @@
 name: Lint Code Base
 
 on:
-  push:
-    branches: [ "directive" ]
   pull_request:
     branches: [ "directive" ]
+  schedule:
+    - cron: 0 1 1,8,15,23 1-12 0
 jobs:
   run-lint:
     runs-on: ubuntu-latest
