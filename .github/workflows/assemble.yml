@@ -107,24 +107,24 @@ jobs:
       # Computes character-count delta against baseline.
       # Exit 0  → normal (no archive needed)
       # Exit 2  → ≥15% content reduction → archive this version
-#      - name: Run Version Manager
-#        id: versioning
-#        run: |
-#          set +e
-#          python scripts/version_manager.py
-#          VERSION_EXIT=$?
-#          set -e
+      - name: Run Version Manager
+        id: versioning
+        run: |
+          set +e
+          python scripts/version_manager.py
+          VERSION_EXIT=$?
+          set -e
 
           # Read version for use in later steps
-#          VERSION=$(python -c "
-#          import json, pathlib
-#          v = json.loads(pathlib.Path('frontier_version.json').read_text())
-#          print(f\"{v['major']}.{v['minor']}\")
-#          ")
-#          echo "frontier_version=$VERSION"     >> $GITHUB_OUTPUT
-#          echo "archive_triggered=$( [ $VERSION_EXIT -eq 2 ] && echo true || echo false )" >> $GITHUB_OUTPUT
-#          echo "Frontier version: $VERSION"
-#          echo "Archive triggered: $( [ $VERSION_EXIT -eq 2 ] && echo YES || echo no )"
+          VERSION=$(python -c "
+          import json, pathlib
+          v = json.loads(pathlib.Path('frontier_version.json').read_text())
+          print(f\"{v['major']}.{v['minor']}\")
+          ")
+          echo "frontier_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "archive_triggered=$( [ $VERSION_EXIT -eq 2 ] && echo true || echo false )" >> $GITHUB_OUTPUT
+          echo "Frontier version: $VERSION"
+          echo "Archive triggered: $( [ $VERSION_EXIT -eq 2 ] && echo YES || echo no )"
 
       # PHASE 4: Build
       - name: Set up Node.js
