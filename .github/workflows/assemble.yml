@@ -72,7 +72,7 @@ jobs:
       # Writes research_context.json consumed by the assembler.
 #      - name: Run Research Agent
 #        env:
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+#          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
 #        if: github.event.inputs.skip_research != 'true'
 #        run: python scripts/research.py --days 14
 
@@ -88,8 +88,8 @@ jobs:
           cands = ctx.get("emergent", {}).get("candidates", [])
           print(f"\n{'='*60}")
           print(f"  NEW: {len(cands)} emergent candidate(s) — copy to topics_registry.py")
-         print(f"{'='*60}")
-         for c in cands:
+          print(f"{'='*60}")
+          for c in cands:
               print(f"  [{c.get('era','')}] {c.get('title','')}")
           PYEOF
 
@@ -130,7 +130,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '`24.x'
+          node-version: '24.x'
           cache: npm
 
       - name: Install Node dependencies
