@@ -32,17 +32,18 @@ Usage
   python scripts/research.py --skip-emergent # skip the expensive LLM scan
 """
 
-from argparse import ArgumentParser
 import json
 import os
 import re
 import sys
 import time
-from urllib import error, parse, request
 
 import xml.etree.ElementTree as ET
+from argparse import ArgumentParser
+
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib import error, parse, request
 
 import anthropic
 
@@ -209,15 +210,16 @@ def run_pwc_crawl() -> list[dict]:
         return []
 
     papers = []
-    for item in data.get("results", [])[:PAPERS_WITH_CODE_N]:
-        papers.append({
+    papers.extend(
+        {
             "title": item.get("title", ""),
             "url": item.get("url_pdf") or item.get("url_abs", ""),
             "published": item.get("published", ""),
             "stars": item.get("stars", 0),
             "abstract": (item.get("abstract") or "")[:500],
-        })
-
+        }
+        for item in data.get("results", [])[:PAPERS_WITH_CODE_N]
+    )
     print(f" → {len(papers)} paper(s) from Papers With Code")
     return papers
 
@@ -248,7 +250,7 @@ Your task: identify AI/ML neural-network architectures or foundational technique
    {{
      "id": "kebab-case-id",
      "title": "Full Human-Readable Title",
-     "era": "YYYY or YYYY–YYYY",
+     "era": "YYYY or YYYY-YYYY",
      "category": "one of: foundational | convolutional | recurrent | attention | generative | graph | reinforcement | modern",
      "sidebar_order": <integer — place it after the last entry in its category>,
      "depends_on": ["id-of-prerequisite", ...],
@@ -258,7 +260,7 @@ Your task: identify AI/ML neural-network architectures or foundational technique
 
 ## Output format
 Respond with a JSON object (no markdown fences) with two keys:
-- "summary": a 2–3 sentence prose paragraph describing what you found
+- "summary": a 2-3 sentence prose paragraph describing what you found
 - "candidates": an array of the above schema objects ("candidates": "nothing new" if nothing genuinely new)
 
 Search broadly before concluding. Be selective — only include architectures with clear structural novelty or genuinely new methods/optimizations and at least one credible source.  Regard sources without code, algorithm, or some means of method reproduction with high skepticism.
@@ -322,7 +324,7 @@ def build_per_topic_context(arxiv_results: dict[str, list[dict]]) -> dict[str, l
 
         for paper in pool:
             haystack = (paper["title"] + " " + paper["abstract"]).lower()
-            score = sum(1 for kw in keywords if len(kw) > 4 and kw in haystack)
+            score = sum(len(kw) > 4 and kw in haystack for kw in keywords)
             if score > 0:
                 scored.append((score, paper))
 
@@ -356,9 +358,7 @@ def write_context(
     CONTEXT_FILE.write_text(json.dumps(context, indent=2, ensure_ascii=False))
     print(f"\n✅ Research context written → {CONTEXT_FILE.relative_to(ROOT)}")
 
-    # Print emergent candidates as copy-pasteable registry entries
-    candidates = emergent.get("candidates", [])
-    if candidates:
+    if candidates := emergent.get("candidates", []):
         print("\n" + "═" * 70)
         print("🆕 emergent ARCHITECTURE CANDIDATES")
         print("Review, then copy-paste into scripts/topics_registry.py")
@@ -396,7 +396,8 @@ def main():
     # Phase 4: Per-topic context mapping
     print("\n🗺️ Phase 4: Mapping papers to topics")
     per_topic = build_per_topic_context(arxiv_results)
-    covered = sum(1 for v in per_topic.values() if v)
+    covered = sum(bool(v)
+              for v in per_topic.values())
     print(f" → {covered}/{len(TOPICS)} topics have at least one recent paper")
 
     # Phase 5: Write output
