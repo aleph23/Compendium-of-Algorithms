@@ -36,7 +36,7 @@ CONTEXT_FILE = ROOT / "research_context.json"   # written by research.py
 arg = argparse.ArgumentParser()
 target_dir = (p := arg.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", 
                                     help="Target directory for output.  Cooresponds to first (Established) or second (Emergent) book. (default: frontier)"))
-target_dir = str(target_dir)
+target_dir = str(p := target_dir.parse_args)
 
 # Import topic registry
 sys.path.insert(0, str(Path(__file__).parent))
