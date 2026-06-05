@@ -8,7 +8,7 @@ const BASE = process.env.ASTRO_BASE || "/";
 
 export default defineConfig({
   base: BASE,
-  outDir: "src/content/docs",
+  outDir: "dist/",
   markdown: {
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],

@@ -391,7 +391,7 @@ def main():
     # Phase 3: emergent scan
     emergent: dict = {"summary": "", "candidates": []}
     known_ids = [t["id"] for t in TOPICS]
-    run_emergent_scan(known_ids)
+    emergent = run_emergent_scan(known_ids)
 
     # Phase 4: Per-topic context mapping
     print("\n🗺️ Phase 4: Mapping papers to topics")

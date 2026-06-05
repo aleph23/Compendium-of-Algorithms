@@ -294,15 +294,15 @@ TOPICS_BY_ID = {t["id"]: t for t in TOPICS}
 
 # Canonical category order for sidebar grouping
 CATEGORY_ORDER = [
-    "received-canon/foundational",
-    "received-canon/convolutional",
-    "received-canon/recurrent",
-    "received-canon/attention",
-    "received-canon/generative",
-    "received-canon/graph",
-    "received-canon/reinforcement",
-    "received-canon/modern",
-    "frontier/emergent",
+    "foundational",
+    "convolutional",
+    "recurrent",
+    "attention",
+    "generative",
+    "graph",
+    "reinforcement",
+    "modern",
+    "emergent",
 ]
 
 CATEGORY_LABELS = {
