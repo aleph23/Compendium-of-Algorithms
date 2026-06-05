@@ -16,12 +16,12 @@ Environment
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import sys
 import time
-import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -68,14 +68,13 @@ def is_page_complete(content: str) -> bool:
     """Check if a generated page meets the minimum completion criteria."""
     # 1. WrittenIntro: 5 paragraphs in Overview (roughly)
     overview_match = re.search(r"### 2\. Overview\n(.*?)\n###", content, re.DOTALL)
-    if overview_match:
-        intro_text = overview_match.group(1).strip()
-        paragraphs = [p for p in intro_text.split("\n\n") if len(p.strip()) > 50]
-        if len(paragraphs) < 5:
-            return False
-    else:
+    if not overview_match:
         return False
 
+    intro_text = overview_match.group(1).strip()
+    paragraphs = [p for p in intro_text.split("\n\n") if len(p.strip()) > 50]
+    if len(paragraphs) < 5:
+        return False
     # 2. VisualRepresentation: 3 Mermaid charts
     mermaid_blocks = re.findall(r"```mermaid", content)
     if len(mermaid_blocks) < 3:
@@ -106,10 +105,7 @@ def is_page_complete(content: str) -> bool:
     code_blocks = re.findall(r"```[a-z]+\n", content)
     # Subtract mermaid blocks
     non_mermaid_code = len(code_blocks) - len(mermaid_blocks)
-    if non_mermaid_code < 3:
-        return False
-
-    return True
+    return non_mermaid_code >= 3
 
 # --- DEBUGGING: API Exchange and Key Check ---
 print(f"[DEBUG] Loaded API Key: '{API_KEY[:8]}...{API_KEY[-4:]}' (Length: {len(API_KEY)})")

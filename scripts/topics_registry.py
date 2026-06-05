@@ -21,7 +21,7 @@ TOPICS = [
     {
         "id": "perceptron",
         "title": "Perceptron",
-        "era": "1957–1969",
+        "era": "1957-1969",
         "category": "foundational",
         "sidebar_order": 1.010,
         "depends_on": [],
@@ -67,7 +67,7 @@ TOPICS = [
     {
         "id": "convolutional-neural-network",
         "title": "Convolutional Neural Network (CNN)",
-        "era": "1989–1998",
+        "era": "1989-1998",
         "category": "convolutional",
         "sidebar_order": 1.110,
         "depends_on": ["multilayer-perceptron"],
@@ -159,7 +159,7 @@ TOPICS = [
     {
         "id": "gpt",
         "title": "GPT Family (GPT-1 → GPT-4)",
-        "era": "2018–2023",
+        "era": "2018-2023",
         "category": "attention",
         "sidebar_order": 1.340,
         "depends_on": ["transformer"],
@@ -187,7 +187,7 @@ TOPICS = [
     {
         "id": "diffusion-model",
         "title": "Diffusion Model (DDPM / Score Matching)",
-        "era": "2020–2022",
+        "era": "2020-2022",
         "category": "generative",
         "sidebar_order": 1.430,
         "depends_on": ["variational-autoencoder", "transformer"],
@@ -196,7 +196,7 @@ TOPICS = [
     {
         "id": "flow-matching",
         "title": "Flow Matching",
-        "era": "2022–2023",
+        "era": "2022-2023",
         "category": "generative",
         "sidebar_order": 1.440,
         "depends_on": ["diffusion-model"],
@@ -216,7 +216,7 @@ TOPICS = [
     {
         "id": "deep-q-network",
         "title": "Deep Q-Network (DQN)",
-        "era": "2013–2015",
+        "era": "2013-2015",
         "category": "reinforcement",
         "sidebar_order": 1.610,
         "depends_on": ["convolutional-neural-network"],
@@ -225,7 +225,7 @@ TOPICS = [
     {
         "id": "policy-gradient",
         "title": "Policy Gradient Methods (REINFORCE / PPO / A3C)",
-        "era": "1992–2017",
+        "era": "1992-2017",
         "category": "reinforcement",
         "sidebar_order": 1.620,
         "depends_on": ["deep-q-network"],
@@ -234,7 +234,7 @@ TOPICS = [
     {
         "id": "rlhf",
         "title": "Reinforcement Learning from Human Feedback (RLHF)",
-        "era": "2020–2023",
+        "era": "2020-2023",
         "category": "reinforcement",
         "sidebar_order": 1.630,
         "depends_on": ["policy-gradient", "transformer"],
@@ -244,7 +244,7 @@ TOPICS = [
     {
         "id": "mixture-of-experts",
         "title": "Mixture of Experts (MoE)",
-        "era": "1991 / 2022–2024",
+        "era": "1991 / 2022-2024",
         "category": "modern",
         "sidebar_order": 1.710,
         "depends_on": ["transformer"],
@@ -253,7 +253,7 @@ TOPICS = [
     {
         "id": "state-space-model",
         "title": "State Space Models (Mamba / S4)",
-        "era": "2022–2024",
+        "era": "2022-2024",
         "category": "modern",
         "sidebar_order": 1.720,
         "depends_on": ["recurrent-neural-network", "transformer"],
@@ -271,7 +271,7 @@ TOPICS = [
     {
         "id": "multimodal-foundation-model",
         "title": "Multimodal Foundation Models",
-        "era": "2021–2024",
+        "era": "2021-2024",
         "category": "modern",
         "sidebar_order": 1.740,
         "depends_on": ["vision-transformer", "gpt"],
