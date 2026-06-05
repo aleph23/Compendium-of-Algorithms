@@ -22,10 +22,16 @@ import os
 import re
 import sys
 import time
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
 import anthropic
+
+# Topic registry
+sys.path.insert(0, str(Path(__file__).parent))
+from topics_registry import TOPICS, TOPICS_BY_ID, CATEGORY_ORDER, CATEGORY_LABELS
+
 
 # Paths
 ROOT = Path(__file__).parent.parent
@@ -37,10 +43,19 @@ arg = argparse.ArgumentParser()
 target_dir = (p := arg.add_argument("--target", choices=["frontier", "received-canon"], default="frontier", 
                                     help="Target directory for output.  Cooresponds to first (Established) or second (Emergent) book. (default: frontier)"))
 target_dir = str(p := target_dir.parse_args)
+client = anthropic.Anthropic(api_key=API_KEY)
 
-# Import topic registry
-sys.path.insert(0, str(Path(__file__).parent))
-from topics_registry import TOPICS, TOPICS_BY_ID, CATEGORY_ORDER, CATEGORY_LABELS
+MODEL = "claude-opus-4-8"      # Use the best available model for quality
+MAX_TOKENS = 32000
+RETRY_SLEEP = 45               # seconds between retries
+MAX_RETRIES = 3
+
+# --- DEBUGGING: API Exchange and Key Check ---
+print(f"[DEBUG] Loaded API Key: '{API_KEY[:8]}...{API_KEY[-4:]}' (Length: {len(API_KEY)})")
+
+logging.basicConfig(level=logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.DEBUG)
+# ---------------------------------------------
 
 # Anthropic client
 API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
@@ -64,27 +79,27 @@ COMPLETION_CRITERIA = {
     }
 }
 
-def is_page_complete(content: str) -> bool:
+def is_page_complete(content: str) -> tuple[bool, str]:
     """Check if a generated page meets the minimum completion criteria."""
     # 1. WrittenIntro: 5 paragraphs in Overview (roughly)
     overview_match = re.search(r"### 2\. Overview\n(.*?)\n###", content, re.DOTALL)
     if not overview_match:
-        return False
+        return False, "Architecture Introduction Not Written"
 
     intro_text = overview_match.group(1).strip()
     paragraphs = [p for p in intro_text.split("\n\n") if len(p.strip()) > 50]
     if len(paragraphs) < 5:
-        return False
+        return False, "Architecture Introduction Must Be At Least 5 Paragraphs"
     # 2. VisualRepresentation: 3 Mermaid charts
     mermaid_blocks = re.findall(r"```mermaid", content)
     if len(mermaid_blocks) < 3:
-        return False
+        return False, "Visual Representation Must Have At Least 3 Mermaid Charts"
 
     # 3. PertinentEquations: Katex, Legend, Plain English
     # Check for at least one equation block with a table (legend), and a following paragraph
     equation_blocks = re.findall(r"\$\$.*?\$\$.*?\|.*?\|.*?\n\n", content, re.DOTALL)
     if not equation_blocks:
-        return False
+        return False, "Pertinent Equations Missing KaTeX, Legend, or Plain English"
 
     # 4. Relations & Historicity: 3 Paragraphs
     historicity_match = re.search(r"### 12\. Relations & Historicity\n(.*?)\n###", content, re.DOTALL)
@@ -92,35 +107,23 @@ def is_page_complete(content: str) -> bool:
         hist_text = historicity_match.group(1).strip()
         paragraphs = [p for p in hist_text.split("\n\n") if len(p.strip()) > 50]
         if len(paragraphs) < 3:
-            return False
+            return False, "Relations & Historicity Must Be At Least 3 Paragraphs"
     else:
-        return False
+        return False, "Relations & Historicity Section Missing"
 
     # 5. DocumentationLinks: 8
     links = re.findall(r"\[.*?\]\(http.*?\)", content)
     if len(links) < 8:
-        return False
+        return False, "Must Have At Least 8 Documentation Links"
 
     # 6. InScopeCodeExamples: 3
     code_blocks = re.findall(r"```[a-z]+\n", content)
     # Subtract mermaid blocks
     non_mermaid_code = len(code_blocks) - len(mermaid_blocks)
-    return non_mermaid_code >= 3
-
-# --- DEBUGGING: API Exchange and Key Check ---
-print(f"[DEBUG] Loaded API Key: '{API_KEY[:8]}...{API_KEY[-4:]}' (Length: {len(API_KEY)})")
-
-import logging
-logging.basicConfig(level=logging.WARNING)
-logging.getLogger("httpx").setLevel(logging.DEBUG)
-# ---------------------------------------------
-
-client = anthropic.Anthropic(api_key=API_KEY)
-MODEL = "claude-opus-4-7"      # Use the best available model for quality
-MAX_TOKENS = 32000
-RETRY_SLEEP = 20                    # seconds between rate-limit retries
-MAX_RETRIES = 3
-
+    if non_mermaid_code < 3:
+        return False, "Must Have At Least 3 In-Scope Code Examples"
+        
+    return True, "Complete"
 
 # RESEARCH CONTEXT (produced by research.py, consumed here)
 def load_research_context() -> dict:
@@ -476,7 +479,7 @@ def main():
     architecture_pages = [p for p in existing_pages if p.name != "index.md"]
     
     # has_content is True ONLY if there are architecture pages, AND they are all complete
-    has_content = len(architecture_pages) > 0 and all(is_page_complete(p.read_text()) for p in architecture_pages)
+    has_content = len(architecture_pages) > 0 and all(is_page_complete(p.read_text())[0] for p in architecture_pages)
     
     bootstrap_mode = not state or not has_content
 
