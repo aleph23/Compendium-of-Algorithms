@@ -86,7 +86,7 @@ def is_page_complete(content: str) -> tuple[bool, str]:
     if not overview_match:
         return False, "Architecture Introduction Not Written"
 
-    intro_text = overview_match.group(1).strip()
+    intro_text = overview_match[1].strip()
     paragraphs = [p for p in intro_text.split("\n\n") if len(p.strip()) > 50]
     if len(paragraphs) < 5:
         return False, "Architecture Introduction Must Be At Least 5 Paragraphs"
@@ -104,7 +104,7 @@ def is_page_complete(content: str) -> tuple[bool, str]:
     # 4. Relations & Historicity: 3 Paragraphs
     historicity_match = re.search(r"### 12\. Relations & Historicity\n(.*?)\n###", content, re.DOTALL)
     if historicity_match:
-        hist_text = historicity_match.group(1).strip()
+        hist_text = historicity_match[1].strip()
         paragraphs = [p for p in hist_text.split("\n\n") if len(p.strip()) > 50]
         if len(paragraphs) < 3:
             return False, "Relations & Historicity Must Be At Least 3 Paragraphs"
@@ -122,7 +122,7 @@ def is_page_complete(content: str) -> tuple[bool, str]:
     non_mermaid_code = len(code_blocks) - len(mermaid_blocks)
     if non_mermaid_code < 3:
         return False, "Must Have At Least 3 In-Scope Code Examples"
-        
+
     return True, "Complete"
 
 # RESEARCH CONTEXT (produced by research.py, consumed here)
@@ -191,6 +191,18 @@ def build_prompt(topic: dict, all_topics: list[dict], research_ctx: dict = {}, t
     ]
     dep_str = ", ".join(dep_titles) if dep_titles else "none"
     research_block = format_research_block(topic, research_ctx)
+
+    existing_instruction = ""
+    existing_path = CONTENT_DIR / target_dir / topic["category"] / f"{topic['id']}.md"
+    if existing_path.exists():
+        existing_content = existing_path.read_text(encoding="utf-8")
+        existing_instruction = (
+            "\n## Existing Page\n"
+            "Below is the current version of this page. "
+            "Preserve anything still accurate; update what has changed; add new sections where needed. "
+            "Do NOT regress or lose existing content.\n\n"
+            f"{existing_content}\n"
+        )
     bootstrap_instruction = ""
     if bootstrap:
         bootstrap_instruction = (
@@ -307,7 +319,7 @@ Cross-links to related topics in this book. Use Starlight relative links:
 
 {research_block}
 """
-    return prompt_template.replace("{}", target_dir)
+    return prompt_template
 
 # STATE MANAGEMENT
 def load_state() -> dict:
@@ -392,8 +404,6 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
 # INDEX GENERATION
 def write_category_index(category: str, topics_in_cat: list[dict], target_dir: str = "frontier"):
     """Write a category landing page listing all topics."""
-    label = CATEGORY_LABELS.get(category, category.title())
-    target_label = target_dir.replace("-", " ").title()
     lines = [
         "---",
         f'title: "{label}"',
@@ -401,61 +411,69 @@ def write_category_index(category: str, topics_in_cat: list[dict], target_dir: s
         "---",
         "",
         f"# {label}",
-        "",
-        "| Architecture | Era | Summary |",
-        "|---|---|---|",
-    ]
-    for t in sorted(topics_in_cat, key=lambda x: x["sidebar_order"]):
-        lines.append(
-            f"| [{t['title']}](/{target_dir}/{t['category']}/{t['id']}/) "
-            f"| {t['era']} | {t['summary']} |"
-        )
+        "",]
+
+    if target_dir == "frontier":
+        lines += [
+            "| Architecture | Summary |",
+            "|---|---|",
+        ]
+        for t in sorted(topics_in_cat, key=lambda x: x["sidebar_order"]):
+            lines.append(
+                f"| [{t['title']}](/{target_dir}/{t['category']}/{t['id']}/) "
+                f"| {t['summary']} |"
+            )
+    else:
+        lines += [
+            "| Architecture | Era | Summary |",
+            "|---|---|---|",
+        ]
+        for t in sorted(topics_in_cat, key=lambda x: x["sidebar_order"]):
+            lines.append(
+                f"| [{t['title']}](/{target_dir}/{t['category']}/{t['id']}/) "
+                f"| {t['era']} | {t['summary']} |"
+            )
+
+
+    (CONTENT_DIR / "index.md").write_text("\n".join(lines), encoding="utf-8")
+    print("  ✅ Home index written")
+
 
     cat_dir = CONTENT_DIR / target_dir / category
     cat_dir.mkdir(parents=True, exist_ok=True)
     (cat_dir / "index.md").write_text("\n".join(lines), encoding="utf-8")
 
 
-def write_home_index(target_dir: str = "frontier"):
-    """Write the root index page."""
+def write_book_index(target_dir: str = "frontier"):
+    """Write the book index/landing page (either received-canon/ or frontier/ index.md)."""
     lines = [
         "---",
-        'title: "Compendium of Algorithms"',
-        'description: "The Formal Specification and Structural Composition of Probabilistic Computational Systems and Their Occasional Interdependence. "',
-        "template: splash",
-        "hero:",
-        '  title: "Compendium of Algorithms"',
-        '  tagline: "Every major neural-network architecture — used, excused, and imaged — from perceptron to tomorrow."',
-        "  actions:",
-        '    - text: "Start Reading →"',
-        '      link: /foundational/monte-carlo/',
-        '      variant: primary',
+        f'title: "{target_label}"',
+        'description: "Emergent Topics On: The Formal Specification and Structural Composition of Probabilistic Computational Systems and Their Occasional Interdependence. "',
         "---",
-        "",
-        "## What's inside",
-        "",
-        "Each page contains:",
-        "",
-        "- **Narrative overview** - historical context and motivation",
-        "- **Structural diagram** - Mermaid flowchart of all components",
-        "- **Operational flow** - step-by-step data-pass diagram",
-        "- **Layer breakdown** - every layer: purpose, shapes, parameters, hyperparameters, tuning",
-        "- **Core equations** - LaTeX math + symbol key table + plain-English paragraph",
-        "- **Complexity analysis** - time, space, parameter counts",
-        "- **Strengths & limitations**",
-        "- **Key milestones** - landmark papers and releases",
-        "- **Reference material** - Implementation documentation and usage code snippets"
-        "",
-        "## Architectures covered",
-        "",
-    ]
-    for cat in CATEGORY_ORDER:
-        label = CATEGORY_LABELS.get(cat, cat)
-        cat_topics = [t for t in TOPICS if t["category"] == cat]
-        lines.append(f"### {label}")
-        for t in sorted(cat_topics, key=lambda x: x["sidebar_order"]):
-            lines.append(f"- [{t['title']}](/{target_dir}/{t['category']}/{t['id']}/) — {t['era']}")
-        lines.append("")
+        f"# {target_label}",
+        "",]
+
+    if target_dir == "frontier":
+        lines += [
+            "| Architecture | Summary |",
+            "|---|---|",
+        ]
+        for t in sorted(topics_in_cat, key=lambda x: x["sidebar_order"]):
+            lines.append(
+                f"| [{t['title']}](/{target_dir}/{t['category']}/{t['id']}/) "
+                f"| {t['summary']} |"
+            )
+    else:
+        lines += [
+            "| Architecture | Era | Summary |",
+            "|---|---|---|",
+        ]
+        for t in sorted(topics_in_cat, key=lambda x: x["sidebar_order"]):
+            lines.append(
+                f"| [{t['title']}](/{target_dir}/{t['category']}/{t['id']}/) "
+                f"| {t['era']} | {t['summary']} |"
+            )
 
     (CONTENT_DIR / "index.md").write_text("\n".join(lines), encoding="utf-8")
     print("  ✅ Home index written")
@@ -463,10 +481,13 @@ def write_home_index(target_dir: str = "frontier"):
 
 def main():
     state = load_state()
+    label = CATEGORY_LABELS.get(category, category.title())
+    target_label = target_dir.replace("-", " ").title()
     CONTENT_DIR.mkdir(parents=True, exist_ok=True)
 
-    with open(os.environ['GITHUB_ENV'], 'a') as f:
-        f.write(f"MY_TARGET={CONTENT_DIR}")    
+    if github_env := os.environ.get('GITHUB_ENV'):
+        with open(github_env, 'a') as f:
+            f.write(f"MY_TARGET={CONTENT_DIR}")
 
     # Load research context (produced by research.py)
     research_ctx = load_research_context()
@@ -477,10 +498,10 @@ def main():
     existing_pages = list(target_path.rglob("*.md"))
     # Filter out index.md files and check if actual content meets minimum criteria
     architecture_pages = [p for p in existing_pages if p.name != "index.md"]
-    
+
     # has_content is True ONLY if there are architecture pages, AND they are all complete
     has_content = len(architecture_pages) > 0 and all(is_page_complete(p.read_text())[0] for p in architecture_pages)
-    
+
     bootstrap_mode = not state or not has_content
 
     if bootstrap_mode:
@@ -490,7 +511,7 @@ def main():
         # Incremental mode: topics changed in registry OR topics with new research findings
         queue = []
         research_topics = research_ctx.get("per_topic", {})
-        
+
         for t in TOPICS:
             if needs_update(t, state):
                 queue.append(t)
@@ -519,9 +540,9 @@ def main():
 
     print("\n📚 Writing category indices…")
     for cat in CATEGORY_ORDER:
-        if cat_topics := [t for t in TOPICS if t["category"] == cat]:
-            write_category_index(cat, cat_topics, target_dir)
-    write_home_index(target_dir)
+        cat_topics = [t for t in TOPICS if t["category"] == cat]:
+        write_category_index(cat, cat_topics, target_dir)
+    write_book_index(target_dir)
 
     print(f"\n🎉 Done — {len(queue)} page(s) generated, indices updated.")
 

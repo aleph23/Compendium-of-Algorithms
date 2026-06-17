@@ -199,40 +199,33 @@ jobs:
         run: |
           git config --global user.name  "Compendium Assembler"
           git config --global user.email "assembler@github.com"
-
-          cp -r dist /tmp/compendium-dist
-          cp .assembler_state.json  /tmp/assembler_state.json  2>/dev/null || true
-          cp research_context.json  /tmp/research_context.json 2>/dev/null || true
-          cp frontier_version.json  /tmp/frontier_version.json 2>/dev/null || true
-
-          git checkout -B compendium
-          git rm -rf --cached . 2>/dev/null || true
-          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-
-          cp -r /tmp/compendium-dist/. .
-          rm -rf /tmp/compendium-dist
-
+          # Stash new build output (survives branch switch)
+          cp -r dist /tmp/new-build
+          cp .assembler_state.json  /tmp/  2>/dev/null || true
+          cp research_context.json  /tmp/  2>/dev/null || true
+          cp frontier_version.json  /tmp/  2>/dev/null || true
+          # Switch to compendium branch
+          git fetch origin compendium
+          git checkout compendium
+          # Remove ONLY the target book's directory
+          rm -rf ./${TARGET}
+          # Copy new target book
+          cp -r /tmp/new-build/${TARGET} ./${TARGET}
+          # Merge new _astro assets (add new, keep old — never delete)
+          # Content-hashed filenames mean old and new never collide
+          cp -rn /tmp/new-build/_astro/* ./ _astro/ 2>/dev/null || true
+          # Update root index.html if it exists (it should from prior run)
+          if [ -f /tmp/new-build/index.html ]; then
+            cp /tmp/new-build/index.html ./index.html
+          fi
           # Restore state files for next incremental run
-          cp /tmp/assembler_state.json  .assembler_state.json  2>/dev/null || true
-          cp /tmp/research_context.json research_context.json  2>/dev/null || true
-          cp /tmp/frontier_version.json frontier_version.json  2>/dev/null || true
-
-          cat > README.md << 'EOF'
-          Compendium of Algorithms
-          The Formal Specification and Structural Composition of Probabilistic
-          Computational Systems and Their Occasional Interdependence
-
-          Open index.html to read locally.
-          Liber Primus - The Received Canon  |  Liber Levitatis et Inconstantiae - Frontier
-
-          This branch is auto-generated. See directive branch for source scripts.
-          EOF
-
+          cp /tmp/.assembler_state.json  .assembler_state.json  2>/dev/null || true
+          cp /tmp/research_context.json  research_context.json  2>/dev/null || true
+          cp /tmp/frontier_version.json  frontier_version.json  2>/dev/null || true
           FRONTIER_VERSION="${{ steps.versioning.outputs.frontier_version }}"
           git add -A
-          git commit -m "Compendium update $(date +'%Y-%m-%d') — Frontier v${FRONTIER_VERSION}" \
-            || echo "Nothing to commit"
-          git push origin compendium --force
+          git commit -m "Update ${TARGET} — Frontier v${FRONTIER_VERSION}" || echo "Nothing to commit"
+          git push origin compendium
 
       # PHASE 7: Upload artifacts & deploy to GitHub Pages:
       - name: Deploy Compiled Docs

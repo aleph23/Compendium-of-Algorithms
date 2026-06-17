@@ -314,5 +314,5 @@ CATEGORY_LABELS = {
     "graph": "Graph & Geometric",
     "reinforcement": "Reinforcement Learning",
     "modern": "Modern Architectures",
-    "future": "Emergent Technology",
+    "emergent": "Emergent Technology",
 }
