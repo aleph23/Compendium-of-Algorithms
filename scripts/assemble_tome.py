@@ -540,9 +540,9 @@ def main():
 
     print("\n📚 Writing category indices…")
     for cat in CATEGORY_ORDER:
-        cat_topics = [t for t in TOPICS if t["category"] == cat]:
-        write_category_index(cat, cat_topics, target_dir)
-    write_book_index(target_dir)
+        if cat_topics = [t for t in TOPICS if t["category"] == cat]:
+            write_category_index(cat, cat_topics, target_dir)
+    write_home_index(target_dir)
 
     print(f"\n🎉 Done — {len(queue)} page(s) generated, indices updated.")
 
