@@ -32,6 +32,10 @@ import anthropic
 sys.path.insert(0, str(Path(__file__).parent))
 from topics_registry import TOPICS, TOPICS_BY_ID, CATEGORY_ORDER, CATEGORY_LABELS
 
+# Anthropic client
+API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+if not API_KEY:
+    sys.exit("ERROR: LLM_API_KEY environment variable not set.")
 
 # Paths
 ROOT = Path(__file__).parent.parent
@@ -57,10 +61,7 @@ logging.basicConfig(level=logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.DEBUG)
 # ---------------------------------------------
 
-# Anthropic client
-API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
-if not API_KEY:
-    sys.exit("ERROR: LLM_API_KEY environment variable not set.")
+target_label = target_dir.replace("-", " ").title()
 
 # Completion Criteria (Minimum definition of 'has_content')
 COMPLETION_CRITERIA = {
@@ -318,6 +319,8 @@ Cross-links to related topics in this book. Use Starlight relative links:
 {bootstrap_instruction}
 
 {research_block}
+
+{existing_instruction}
 """
     return prompt_template
 
@@ -404,6 +407,7 @@ def write_topic_page(topic: dict, research_ctx: dict = {}, target_dir: str = "fr
 # INDEX GENERATION
 def write_category_index(category: str, topics_in_cat: list[dict], target_dir: str = "frontier"):
     """Write a category landing page listing all topics."""
+    label = CATEGORY_LABELS.get(category, category.title())
     lines = [
         "---",
         f'title: "{label}"',
@@ -481,8 +485,6 @@ def write_book_index(target_dir: str = "frontier"):
 
 def main():
     state = load_state()
-    label = CATEGORY_LABELS.get(category, category.title())
-    target_label = target_dir.replace("-", " ").title()
     CONTENT_DIR.mkdir(parents=True, exist_ok=True)
 
     if github_env := os.environ.get('GITHUB_ENV'):
@@ -542,7 +544,6 @@ def main():
     for cat in CATEGORY_ORDER:
         if cat_topics := [t for t in TOPICS if t["category"] == cat]:
             write_category_index(cat, cat_topics, target_dir)
-    write_home_index(target_dir)
 
     print(f"\n🎉 Done — {len(queue)} page(s) generated, indices updated.")
 
