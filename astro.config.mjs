@@ -9,10 +9,7 @@ const BASE = process.env.ASTRO_BASE || "/";
 export default defineConfig({
   base: BASE,
   outDir: "dist/",
-  markdown: {
-    remarkPlugins: [remarkMath],
-    rehypePlugins: [rehypeKatex],
-  },
+  markdown: { remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex], },
   integrations: [
     starlight({
       title: "Compendium of Algorithms",
@@ -26,28 +23,26 @@ export default defineConfig({
       ],
       components: { Head: "./src/components/CompendiumHead.astro", },
         social: { github: "https://github.com/aleph23/compendium-of-algorithms", },
-      sidebar: [ 
-        { 
-          label: "Liber Primus: Received Canon",
+      sidebar: [
+        { label: "Liber Primus: Received Canon",
           items: [
             { label: "Introduction", link: "/received-canon/" },
-            { label: "Foundational", autogenerate: { directory: "/received-canon/foundational" } },
-            { label: "Convolutional Networks", autogenerate: { directory: "/received-canon/convolutional" } },
-            { label: "Recurrent Networks", autogenerate: { directory: "/received-canon/recurrent" } },
-            { label: "Attention & Transformers", autogenerate: { directory: "/received-canon/attention" } },
-            { label: "Generative Models", autogenerate: { directory: "/received-canon/generative" } },
-            { label: "Graph & Geometric", autogenerate: { directory: "/received-canon/graph" } },
-            { label: "Reinforcement Learning", autogenerate: { directory: "/received-canon/reinforcement" } },
-            { label: "Modern Architectures", autogenerate: { directory: "/received-canon/modern" } },
+            { label: "Foundational", autogenerate: { directory: "received-canon/foundational" } },
+            { label: "Convolutional Networks", autogenerate: { directory: "received-canon/convolutional" } },
+            { label: "Recurrent Networks", autogenerate: { directory: "received-canon/recurrent" } },
+            { label: "Attention & Transformers", autogenerate: { directory: "received-canon/attention" } },
+            { label: "Generative Models", autogenerate: { directory: "received-canon/generative" } },
+            { label: "Graph & Geometric", autogenerate: { directory: "received-canon/graph" } },
+            { label: "Reinforcement Learning", autogenerate: { directory: "received-canon/reinforcement" } },
+            { label: "Modern Architectures", autogenerate: { directory: "received-canon/modern" } },
           ],
         },
-        {
-          label: "Liber Levitatis et Inconstantiae: Frontier",
+        { label: "Liber Levitatis et Inconstantiae: Frontier",
           items: [
             { label: "About Frontier", link: "/frontier/" },
-            { label: "Emergent Architectures", autogenerate: { directory: "/frontier/emergent" } },
-            { label: "Techniques Under Review", autogenerate: { directory: "/frontier/under-review" } },
-            { label: "Archived Editions", autogenerate: { directory: "/frontier/archive" } },
+            { label: "Emergent Architectures", autogenerate: { directory: "frontier/emergent" } },
+            { label: "Techniques Under Review", autogenerate: { directory: "frontier/under-review" } },
+            { label: "Archived Editions", autogenerate: { directory: "frontier/archive" } },
           ],
         },
       ],

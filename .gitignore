@@ -3,7 +3,7 @@ dist/
 .astro/
 *.pyc
 __pycache__/
-.VSCode/
+.vscode/
 *.code-workspace
 
 # State file IS committed so incremental runs work across Actions checkouts

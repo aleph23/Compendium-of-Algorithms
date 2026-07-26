@@ -1,0 +1,159 @@
+name: "Compendium of Algorithms - Biweekly Assembler"
+
+# Maintenance only. This workflow never bootstraps.
+# The first build of either book is done locally with scripts/bootstrap_local.py
+# and committed by hand.
+
+on:
+  schedule:
+    - cron: "0 4 1,15 * *"
+  workflow_dispatch:
+    inputs:
+      skip_research:
+        description: "Skip research phase and reuse cached context"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout directive branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore assembler state
+        uses: actions/cache@v4
+        with:
+          path: .assembler_state.json
+          key: assembler-state-${{ github.run_id }}
+          restore-keys: assembler-state-
+
+      - name: Restore research context
+        uses: actions/cache@v4
+        with:
+          path: research_context.json
+          key: research-context-${{ github.run_id }}
+          restore-keys: research-context-
+
+      - name: Restore frontier version
+        uses: actions/cache@v4
+        with:
+          path: frontier_version.json
+          key: frontier-version-${{ github.run_id }}
+          restore-keys: frontier-version-
+
+      - name: Run research agent
+        if: github.event.inputs.skip_research != 'true'
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: python scripts/research.py --days 14
+
+      - name: Run assembler on Frontier
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: python scripts/assemble_tome.py --target frontier
+
+      - name: Run version manager
+        id: versioning
+        run: |
+          set +e
+          python scripts/version_manager.py
+          VERSION_EXIT=$?
+          set -e
+          VERSION=$(python scripts/read_version.py)
+          echo "frontier_version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ "$VERSION_EXIT" -eq 2 ]; then
+            echo "archive_triggered=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "archive_triggered=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Frontier version: $VERSION"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build Starlight site
+        run: npm run build
+
+      - name: Copy version file into dist
+        run: cp frontier_version.json dist/frontier_version.json 2>/dev/null || true
+
+      - name: Create archive release
+        if: steps.versioning.outputs.archive_triggered == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.versioning.outputs.frontier_version }}"
+          TAG="frontier-v${VERSION}-archive-$(date +'%Y%m%d')"
+          zip -r "frontier-archive-${VERSION}.zip" dist -q
+          gh release create "$TAG" \
+            "frontier-archive-${VERSION}.zip#Frontier compiled site" \
+            --title "Frontier Archive v${VERSION}" \
+            --notes "Automatic archive triggered by a content reduction of 15 percent or more." \
+            --prerelease
+
+      - name: Publish to compendium branch
+        run: |
+          git config --global user.name "Compendium Assembler"
+          git config --global user.email "assembler@github.com"
+
+          cp -r dist /tmp/compendium-dist
+          cp .assembler_state.json /tmp/ 2>/dev/null || true
+          cp research_context.json /tmp/ 2>/dev/null || true
+          cp frontier_version.json /tmp/ 2>/dev/null || true
+
+          git checkout -B compendium
+          git rm -rf --cached . 2>/dev/null || true
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+
+          cp -r /tmp/compendium-dist/. .
+          cp /tmp/.assembler_state.json . 2>/dev/null || true
+          cp /tmp/research_context.json . 2>/dev/null || true
+          cp /tmp/frontier_version.json . 2>/dev/null || true
+
+          printf '%s\n' \
+            'Compendium of Algorithms' \
+            '' \
+            'Open index.html to read locally.' \
+            'Liber Primus - The Received Canon' \
+            'Liber Levitatis et Inconstantiae - Frontier' \
+            '' \
+            'This branch is generated. See the directive branch for sources.' \
+            > README.md
+
+          git add -A
+          git commit -m "Compendium update $(date +'%Y-%m-%d')" || echo "Nothing to commit"
+          git push origin compendium --force
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compendium-${{ github.run_number }}
+          path: /tmp/compendium-dist
+          retention-days: 30

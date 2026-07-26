@@ -1,18 +1,27 @@
+#!/usr/bin/env python3
 """
 topics_registry.py
-------------------
-Canonical list of AI architectures for the book assembler.
-Each architecture has: id, title, era, category, and dependencies (for ordering).
-Add new topics here — the assembler will pick them up on the next run.
+
+    Canonical list of architectures for the Compendium.
+
+Two rules that were previously violated and caused silent failures:
+
+1. CATEGORY_ORDER must contain plain category names that exactly match the
+   "category" field on each topic. Do not prefix with a book path. The
+   assembler builds the path itself from --target plus category.
+
+2. Each topic declares which book it belongs to via "book". The assembler
+   only generates topics whose book matches its --target. Without this, a
+   Frontier-only topic would get written into the Canon.
 """
 
 TOPICS = [
-
     # FOUNDATIONAL
     {
         "id": "monte-carlo",
         "title": "Monte Carlo Methods",
         "era": "1940s",
+        "book": "received-canon",
         "category": "foundational",
         "sidebar_order": 1.005,
         "depends_on": [],
@@ -22,6 +31,7 @@ TOPICS = [
         "id": "perceptron",
         "title": "Perceptron",
         "era": "1957-1969",
+        "book": "received-canon",
         "category": "foundational",
         "sidebar_order": 1.010,
         "depends_on": [],
@@ -31,6 +41,7 @@ TOPICS = [
         "id": "multilayer-perceptron",
         "title": "Multilayer Perceptron (MLP)",
         "era": "1986",
+        "book": "received-canon",
         "category": "foundational",
         "sidebar_order": 1.020,
         "depends_on": ["perceptron"],
@@ -40,6 +51,7 @@ TOPICS = [
         "id": "backpropagation",
         "title": "Backpropagation",
         "era": "1986",
+        "book": "received-canon",
         "category": "foundational",
         "sidebar_order": 1.025,
         "depends_on": ["multilayer-perceptron"],
@@ -49,6 +61,7 @@ TOPICS = [
         "id": "hopfield-network",
         "title": "Hopfield Network",
         "era": "1982",
+        "book": "received-canon",
         "category": "foundational",
         "sidebar_order": 1.030,
         "depends_on": ["perceptron"],
@@ -58,6 +71,7 @@ TOPICS = [
         "id": "bayesian-neural-network",
         "title": "Bayesian Neural Network (BNN)",
         "era": "1990s",
+        "book": "received-canon",
         "category": "foundational",
         "sidebar_order": 1.040,
         "depends_on": ["multilayer-perceptron"],
@@ -68,6 +82,7 @@ TOPICS = [
         "id": "convolutional-neural-network",
         "title": "Convolutional Neural Network (CNN)",
         "era": "1989-1998",
+        "book": "received-canon",
         "category": "convolutional",
         "sidebar_order": 1.110,
         "depends_on": ["multilayer-perceptron"],
@@ -77,15 +92,17 @@ TOPICS = [
         "id": "lenet",
         "title": "LeNet-5",
         "era": "1998",
+        "book": "received-canon",
         "category": "convolutional",
         "sidebar_order": 1.120,
         "depends_on": ["convolutional-neural-network"],
-        "summary": "LeCun's digit recogniser — the proof-of-concept that made CNNs credible.",
+        "summary": "LeCun's digit recogniser, the proof-of-concept that made CNNs credible.",
     },
     {
         "id": "alexnet",
         "title": "AlexNet",
         "era": "2012",
+        "book": "received-canon",
         "category": "convolutional",
         "sidebar_order": 1.130,
         "depends_on": ["lenet"],
@@ -95,6 +112,7 @@ TOPICS = [
         "id": "resnet",
         "title": "ResNet (Residual Network)",
         "era": "2015",
+        "book": "received-canon",
         "category": "convolutional",
         "sidebar_order": 1.140,
         "depends_on": ["alexnet"],
@@ -105,6 +123,7 @@ TOPICS = [
         "id": "recurrent-neural-network",
         "title": "Recurrent Neural Network (RNN)",
         "era": "1990",
+        "book": "received-canon",
         "category": "recurrent",
         "sidebar_order": 1.210,
         "depends_on": ["multilayer-perceptron"],
@@ -114,6 +133,7 @@ TOPICS = [
         "id": "lstm",
         "title": "Long Short-Term Memory (LSTM)",
         "era": "1997",
+        "book": "received-canon",
         "category": "recurrent",
         "sidebar_order": 1.220,
         "depends_on": ["recurrent-neural-network"],
@@ -123,6 +143,7 @@ TOPICS = [
         "id": "gru",
         "title": "Gated Recurrent Unit (GRU)",
         "era": "2014",
+        "book": "received-canon",
         "category": "recurrent",
         "sidebar_order": 1.230,
         "depends_on": ["lstm"],
@@ -133,6 +154,7 @@ TOPICS = [
         "id": "attention-mechanism",
         "title": "Attention Mechanism",
         "era": "2015",
+        "book": "received-canon",
         "category": "attention",
         "sidebar_order": 1.310,
         "depends_on": ["lstm"],
@@ -142,6 +164,7 @@ TOPICS = [
         "id": "transformer",
         "title": "Transformer",
         "era": "2017",
+        "book": "received-canon",
         "category": "attention",
         "sidebar_order": 1.320,
         "depends_on": ["attention-mechanism"],
@@ -151,6 +174,7 @@ TOPICS = [
         "id": "bert",
         "title": "BERT",
         "era": "2018",
+        "book": "received-canon",
         "category": "attention",
         "sidebar_order": 1.330,
         "depends_on": ["transformer"],
@@ -158,8 +182,9 @@ TOPICS = [
     },
     {
         "id": "gpt",
-        "title": "GPT Family (GPT-1 → GPT-4)",
-        "era": "2018-2023",
+        "title": "GPT Family (GPT-1 → GPT-5)",
+        "era": "2018-2026",
+        "book": "received-canon",
         "category": "attention",
         "sidebar_order": 1.340,
         "depends_on": ["transformer"],
@@ -170,6 +195,7 @@ TOPICS = [
         "id": "variational-autoencoder",
         "title": "Variational Autoencoder (VAE)",
         "era": "2013",
+        "book": "received-canon",
         "category": "generative",
         "sidebar_order": 1.410,
         "depends_on": ["multilayer-perceptron"],
@@ -179,6 +205,7 @@ TOPICS = [
         "id": "generative-adversarial-network",
         "title": "Generative Adversarial Network (GAN)",
         "era": "2014",
+        "book": "received-canon",
         "category": "generative",
         "sidebar_order": 1.420,
         "depends_on": ["multilayer-perceptron"],
@@ -188,6 +215,7 @@ TOPICS = [
         "id": "diffusion-model",
         "title": "Diffusion Model (DDPM / Score Matching)",
         "era": "2020-2022",
+        "book": "received-canon",
         "category": "generative",
         "sidebar_order": 1.430,
         "depends_on": ["variational-autoencoder", "transformer"],
@@ -197,6 +225,7 @@ TOPICS = [
         "id": "flow-matching",
         "title": "Flow Matching",
         "era": "2022-2023",
+        "book": "received-canon",
         "category": "generative",
         "sidebar_order": 1.440,
         "depends_on": ["diffusion-model"],
@@ -207,6 +236,7 @@ TOPICS = [
         "id": "graph-neural-network",
         "title": "Graph Neural Network (GNN)",
         "era": "2016",
+        "book": "received-canon",
         "category": "graph",
         "sidebar_order": 1.510,
         "depends_on": ["convolutional-neural-network", "attention-mechanism"],
@@ -217,15 +247,17 @@ TOPICS = [
         "id": "deep-q-network",
         "title": "Deep Q-Network (DQN)",
         "era": "2013-2015",
+        "book": "received-canon",
         "category": "reinforcement",
         "sidebar_order": 1.610,
         "depends_on": ["convolutional-neural-network"],
-        "summary": "Q-value function approximated by CNN — Atari-playing breakthrough.",
+        "summary": "Q-value function approximated by CNN, the Atari-playing breakthrough.",
     },
     {
         "id": "policy-gradient",
         "title": "Policy Gradient Methods (REINFORCE / PPO / A3C)",
         "era": "1992-2017",
+        "book": "received-canon",
         "category": "reinforcement",
         "sidebar_order": 1.620,
         "depends_on": ["deep-q-network"],
@@ -235,6 +267,7 @@ TOPICS = [
         "id": "rlhf",
         "title": "Reinforcement Learning from Human Feedback (RLHF)",
         "era": "2020-2023",
+        "book": "received-canon",
         "category": "reinforcement",
         "sidebar_order": 1.630,
         "depends_on": ["policy-gradient", "transformer"],
@@ -245,6 +278,7 @@ TOPICS = [
         "id": "mixture-of-experts",
         "title": "Mixture of Experts (MoE)",
         "era": "1991 / 2022-2024",
+        "book": "received-canon",
         "category": "modern",
         "sidebar_order": 1.710,
         "depends_on": ["transformer"],
@@ -254,6 +288,7 @@ TOPICS = [
         "id": "state-space-model",
         "title": "State Space Models (Mamba / S4)",
         "era": "2022-2024",
+        "book": "received-canon",
         "category": "modern",
         "sidebar_order": 1.720,
         "depends_on": ["recurrent-neural-network", "transformer"],
@@ -263,36 +298,41 @@ TOPICS = [
         "id": "vision-transformer",
         "title": "Vision Transformer (ViT)",
         "era": "2020",
+        "book": "received-canon",
         "category": "modern",
         "sidebar_order": 1.730,
         "depends_on": ["transformer", "convolutional-neural-network"],
-        "summary": "Image patches as tokens — pure self-attention replaces convolution for vision.",
+        "summary": "Image patches as tokens; pure self-attention replaces convolution for vision.",
     },
     {
         "id": "multimodal-foundation-model",
         "title": "Multimodal Foundation Models",
         "era": "2021-2024",
+        "book": "received-canon",
         "category": "modern",
         "sidebar_order": 1.740,
         "depends_on": ["vision-transformer", "gpt"],
         "summary": "Unified models bridging text, image, audio, and video with shared representations.",
     },
-# FRONTIER
+    # FRONTIER
+    # Belongs to the agent-maintained book. The assembler will not write this
+    # into received-canon because its "book" field says otherwise.
     {
         "id": "emergent-tech",
         "title": "Emergent Technology in AI",
         "era": "Tomorrow",
-        "category": "future",
+        "book": "frontier",
+        "category": "emergent",
         "sidebar_order": 2.0,
         "depends_on": [],
-        "summary": "",
+        "summary": "Architectures and methods too new to have accumulated consensus.",
     },
 ]
 
-# Build a fast lookup by id
+# Build a lookup by id
 TOPICS_BY_ID = {t["id"]: t for t in TOPICS}
 
-# Canonical category order for sidebar grouping
+# Plain names only. Must match the "category" field above.
 CATEGORY_ORDER = [
     "foundational",
     "convolutional",
@@ -316,3 +356,6 @@ CATEGORY_LABELS = {
     "modern": "Modern Architectures",
     "emergent": "Emergent Technology",
 }
+def topics_for_book(book: str) -> list[dict]:
+    """Return topics belonging to a given book, defaulting unmarked ones to canon."""
+    return [t for t in TOPICS if t.get("book", "received-canon") == book]

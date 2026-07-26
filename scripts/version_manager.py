@@ -84,7 +84,7 @@ def run():
     current = count_chars()
     v = load_version()
 
-    print("\n📊 Frontier Version Manager")
+    print("\nFrontier Version Manager")
     print(f"Current version: {version_str(v)}")
     print(f"Current chars: {current:,}")
     print(f"Baseline chars: {v['char_count_baseline']:,}")
@@ -120,7 +120,7 @@ def run():
         v["char_count_baseline"] = current
         log_event(v, current, f"major bump — {cumulative_pct:.1%} cumulative drift")
         save_version(v)
-        print(f"\n🎉 MAJOR VERSION → {version_str(v)}  ({cumulative_pct:.1%} cumulative drift)")
+        print(f"\nMAJOR VERSION → {version_str(v)}  ({cumulative_pct:.1%} cumulative drift)")
         return
 
     # Check minor / archive
@@ -133,7 +133,7 @@ def run():
             # Significant content reduction → archive this version
             ARCHIVE_TRIGGERED = True
             event_label += " [ARCHIVE TRIGGERED]"
-            print(f"\n🗄️  ARCHIVE TRIGGERED — {abs(delta_pct):.1%} content reduction")
+            print(f"\nARCHIVE TRIGGERED — {abs(delta_pct):.1%} content reduction")
 
         log_event(v, current, event_label)
         save_version(v)
